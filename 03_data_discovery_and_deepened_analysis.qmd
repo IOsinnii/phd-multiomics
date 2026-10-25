@@ -173,10 +173,13 @@ plot_volcano <- function(df, fc_col, pval_col, label_col,
     geom_point(aes(alpha = .direction, size = .direction)) +
     geom_hline(yintercept = -log10(sig_line_p),
                linetype = "dashed", color = "grey40", linewidth = 0.4) +
-    geom_text_repel(
+    geom_label_repel(
+      # Label only the 4 most significant features per direction
       data = \(d) d |> filter(.direction != "NS") |>
-        slice_max(.neg_log10p, n = 12),
-      aes(label = .label), size = POST_LABEL_SIZE, max.overlaps = 12,
+        group_by(.direction) |> slice_max(.neg_log10p, n = 4) |> ungroup(),
+      aes(label = .label), size = POST_LABEL_SIZE, max.overlaps = 6,
+      box.padding = 0.6, point.padding = 0.3,
+      fill = "white", alpha = 0.85, label.size = 0,
       segment.color = "grey60", show.legend = FALSE
     ) +
     scale_color_manual(values = c(Up = "#d95f02", Down = "#1b9e77",
