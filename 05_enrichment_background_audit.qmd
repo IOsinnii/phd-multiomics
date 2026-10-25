@@ -1,0 +1,550 @@
+---
+title: "Integrated Transcriptome–Metabolome Analysis of Rps2-A226Y Mutant Liver"
+subtitle: "Part 5: Enrichment Annotation Audit and Background Correction"
+author: "Ivan Osinnii"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    df-print: paged
+    fig-width: 10
+    fig-height: 7
+execute:
+  warning: false
+  message: false
+  freeze: true
+---
+
+```{r}
+#| label: setup
+#| echo: false
+
+knitr::opts_chunk$set(dpi = 150)
+```
+
+## Overview
+
+Part 4 ran MetaboAnalystR over six contrasts and reported SMPDB pathways led by the
+Malate-Aspartate Shuttle, Urea Cycle, Warburg Effect and Aspartate Metabolism — a
+noticeably amino-acid and central-carbon flavoured result, sitting awkwardly beside the
+lipid- and bile-acid-centred picture from Parts 1–3.
+
+This chapter audits that result and concludes it is an artefact. Two issues compound:
+
+1. **Annotation coverage.** Only about half of the Metabolon panel reaches a database
+   identifier, and only about a fifth appears in SMPDB at all. The attrition is strongly
+   biased against lipids, which are the dominant class in this phenotype.
+2. **Background choice.** `SetMetabolomeFilter(mSet, FALSE)` in Part 4 tests hits against
+   the entire SMPDB library rather than against the metabolites the platform could
+   actually detect. This inflates every pathway that SMPDB catalogues densely.
+
+Correcting the background does not change which pathways rank highest — it weakens the
+evidence for them by roughly an order of magnitude, and nothing survives multiple-testing
+correction at any of the six contrasts. The honest reading is that Part 4 overstated its
+case, not that it identified the wrong pathways.
+
+## Libraries
+
+```{r}
+#| label: load-libraries
+#| echo: true
+
+# Core wrangling and plotting, plus the enrichment back-end
+library(tidyverse)
+library(here)
+library(pals)
+library(MetaboAnalystR)
+```
+
+We reuse the cleaned differential tables from Part 1, so the metabolite sets are identical
+to those tested in Part 4.
+
+```{r}
+#| label: load-data
+#| echo: true
+
+# Cleaned metabolomics tables from Part 1
+input_dir <- here("output", "01_data_loading_and_pathway_analysis")
+
+met_9m  <- readRDS(file.path(input_dir, "met_9m_clean.rds"))
+met_15m <- readRDS(file.path(input_dir, "met_15m_clean.rds"))
+
+output_dir <- here("output", "05_enrichment_background_audit")
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+## Name Harmonisation
+
+Metabolon flags unconfirmed identifications with a trailing `*`. That character is not part
+of the chemical name and blocks database lookup, so Part 4 stripped it — correctly. But the
+stripped string is then no longer a key into the platform's own annotation table, which
+silently orphans those compounds from their super- and sub-pathway labels.
+
+The fix is to treat these as two separate columns: `query` for the database, `biochemical`
+for the annotations. Everything downstream then stays joinable.
+
+```{r}
+#| label: harmonise-names
+#| echo: true
+
+# Stack both timepoints; keep the lookup key and the annotation key distinct
+all_measured <- bind_rows(
+  met_9m  |> mutate(timepoint = "9m"),
+  met_15m |> mutate(timepoint = "15m")
+) |>
+  dplyr::select(biochemical, super_pathway, sub_pathway,
+                timepoint, log2fc, p_value, significant) |>
+  mutate(query = str_remove(biochemical, "\\*+$"))
+
+# How many names carry the unconfirmed-identification flag?
+all_measured |>
+  group_by(timepoint) |>
+  summarise(n_metabolites = n(),
+            n_flagged = sum(str_detect(biochemical, "\\*+$")),
+            pct_flagged = round(100 * n_flagged / n_metabolites),
+            .groups = "drop") |>
+  knitr::kable(caption = "Metabolon unconfirmed-identification flags")
+```
+
+## Cross-Referencing
+
+Part 4 called `CrossReferencing()` once per contrast. Here a single call covers the union
+of all measured names, which is both faster and guarantees the six contrasts share one
+consistent dictionary. MetaboAnalystR writes cache and library files to the working
+directory, so we redirect it to a scratch folder and restore the path afterwards.
+
+```{r}
+#| label: cross-reference
+#| echo: true
+
+# Keep MetaboAnalystR's side files out of the project root
+scratch_dir <- file.path(output_dir, "_metaboanalyst_scratch")
+dir.create(scratch_dir, recursive = TRUE, showWarnings = FALSE)
+original_wd <- setwd(scratch_dir)
+
+mSet_all <- InitDataObjects("conc", "msetora", FALSE)
+mSet_all <- Setup.MapData(mSet_all, unique(all_measured$query))
+mSet_all <- CrossReferencing(mSet_all, "name")
+mSet_all <- CreateMappingResultTable(mSet_all)
+
+# Load the SMPDB pathway library; this populates `current.msetlib`
+mSet_all <- SetMetabolomeFilter(mSet_all, FALSE)
+mSet_all <- SetCurrentMsetLib(mSet_all, "smpdb_pathway", 2)
+
+setwd(original_wd)
+
+# MetaboAnalystR encodes lookup misses as the literal string "NA"
+map_all <- as_tibble(mSet_all$dataSet$map.table) |>
+  mutate(across(everything(), ~ na_if(.x, "NA"))) |>
+  transmute(query = Query, match_name = Match, HMDB, KEGG)
+```
+
+Matching to *any* identifier is weaker than being an SMPDB member; only the latter can
+contribute to a pathway test. We track both, since the gap between them is the story.
+
+```{r}
+#| label: annotate-coverage
+#| echo: true
+
+# Every compound name appearing in at least one SMPDB set
+smpdb_universe <- unique(unlist(current.msetlib$member))
+
+measured_mapped <- all_measured |>
+  left_join(map_all, by = "query") |>
+  mutate(mapped = !is.na(match_name),
+         in_smpdb = match_name %in% smpdb_universe)
+```
+
+## Coverage Audit
+
+The cascade below is the central diagnostic: of everything measured, what fraction
+survives to the enrichment test?
+
+```{r}
+#| label: coverage-cascade
+#| echo: true
+
+# Measured -> database-matched -> SMPDB member, split by significance
+measured_mapped |>
+  mutate(stratum = if_else(significant, "significant (p < 0.05)", "not significant")) |>
+  group_by(timepoint, stratum) |>
+  summarise(measured = n(), matched = sum(mapped), smpdb_member = sum(in_smpdb),
+            .groups = "drop") |>
+  mutate(pct_matched = round(100 * matched / measured),
+         pct_smpdb = round(100 * smpdb_member / measured)) |>
+  knitr::kable(caption = "Annotation coverage cascade")
+```
+
+Around 55% of metabolites reach an identifier and only ~20% are SMPDB members. Uniform
+attrition would merely cost power. This attrition is not uniform.
+
+```{r}
+#| label: coverage-by-class
+#| echo: true
+
+# Coverage broken down by Metabolon super-pathway
+coverage_by_class <- measured_mapped |>
+  filter(!is.na(super_pathway)) |>
+  group_by(timepoint, super_pathway) |>
+  summarise(n = n(), matched = sum(mapped), smpdb_member = sum(in_smpdb),
+            .groups = "drop") |>
+  mutate(pct_matched = 100 * matched / n,
+         pct_smpdb = 100 * smpdb_member / n)
+
+coverage_by_class |>
+  filter(timepoint == "9m") |>
+  arrange(desc(n)) |>
+  dplyr::select(super_pathway, n, matched, smpdb_member, pct_matched, pct_smpdb) |>
+  knitr::kable(caption = "9-month coverage by chemical class", digits = 0)
+```
+
+Lipids are the largest measured class and among the worst represented in SMPDB; amino
+acids are the opposite. For a lipid-dominated phenotype this is close to a worst case.
+
+```{r}
+#| label: coverage-plot-function
+#| echo: true
+
+# Reusable coverage bar chart for one timepoint
+plot_coverage <- function(coverage_data, tp, tp_label) {
+  plot_df <- coverage_data |>
+    filter(timepoint == tp) |>
+    mutate(super_pathway = fct_reorder(super_pathway, n))
+
+  ggplot(plot_df, aes(x = pct_smpdb, y = super_pathway, fill = super_pathway)) +
+    geom_col(width = 0.7) +
+    geom_text(aes(label = paste0(smpdb_member, "/", n)), hjust = -0.2, size = 3.2) +
+    scale_fill_manual(values = unname(glasbey(26)), guide = "none") +
+    scale_x_continuous(limits = c(0, 100), expand = expansion(mult = c(0, 0.12))) +
+    labs(title = paste0("SMPDB coverage by chemical class (", tp_label, ")"),
+         subtitle = "Labels show SMPDB members / metabolites measured",
+         x = "% of measured metabolites present in SMPDB", y = NULL) +
+    theme_minimal(base_size = 11) +
+    theme(plot.title = element_text(face = "bold", size = 13),
+          panel.grid.minor = element_blank())
+}
+```
+
+::: {.panel-tabset}
+
+### 9 Months
+
+```{r}
+#| label: fig-coverage-9m
+#| echo: true
+#| fig-width: 10
+#| fig-height: 6
+
+p_coverage_9m <- plot_coverage(coverage_by_class, "9m", "9 Months")
+p_coverage_9m
+```
+
+### 15 Months
+
+```{r}
+#| label: fig-coverage-15m
+#| echo: true
+#| fig-width: 10
+#| fig-height: 6
+
+p_coverage_15m <- plot_coverage(coverage_by_class, "15m", "15 Months")
+p_coverage_15m
+```
+
+:::
+
+## Rebuilding the Six Contrasts
+
+The same six contrasts as Part 4 — all significant, up, and down at each timepoint — but
+built on the harmonised table so each metabolite keeps its annotations.
+
+```{r}
+#| label: build-contrasts
+#| echo: true
+
+# Six contrasts, defined on the harmonised table
+contrast_defs <- tribble(
+  ~contrast,                 ~tp,    ~direction,
+  "9m \u2014 All Significant",  "9m",  "all",
+  "9m \u2014 Upregulated",      "9m",  "up",
+  "9m \u2014 Downregulated",    "9m",  "down",
+  "15m \u2014 All Significant", "15m", "all",
+  "15m \u2014 Upregulated",     "15m", "up",
+  "15m \u2014 Downregulated",   "15m", "down"
+)
+
+# Hit list for one contrast, restricted to metabolites that mapped
+contrast_hits <- function(tp, direction) {
+  measured_mapped |>
+    filter(timepoint == tp, significant, mapped) |>
+    filter(switch(direction, all = TRUE, up = log2fc > 0, down = log2fc < 0)) |>
+    pull(match_name)
+}
+
+# The universe: everything measured at that timepoint that mapped
+contrast_universe <- function(tp) {
+  measured_mapped |>
+    filter(timepoint == tp, mapped) |>
+    pull(match_name)
+}
+
+contrast_defs |>
+  mutate(n_hits = map2_int(tp, direction, ~ length(unique(contrast_hits(.x, .y)))),
+         n_in_smpdb = map2_int(tp, direction,
+                               ~ length(intersect(contrast_hits(.x, .y), smpdb_universe)))) |>
+  knitr::kable(caption = "Contrast sizes before and after SMPDB restriction")
+```
+
+The final column is sobering: after restriction to SMPDB members, several contrasts retain
+only a handful of metabolites. Enrichment on that basis is fragile regardless of background.
+
+## Over-Representation with a Controllable Background
+
+Rather than toggling MetaboAnalystR's filter, we implement the hypergeometric test directly.
+The universe is a function argument, so the *only* difference between the two analyses below
+is which set of compounds the null assumes could have been sampled.
+
+```{r}
+#| label: ora-function
+#| echo: true
+
+# Upper-tail hypergeometric ORA against a caller-supplied universe
+run_smpdb_ora <- function(hit_names, universe_names, min_size = 3) {
+  universe_set <- intersect(unique(universe_names), smpdb_universe)
+  hit_set      <- intersect(unique(hit_names), universe_set)
+
+  # Scalars resolved outside mutate(); a column named `hits` would otherwise
+  # shadow the hit vector under data masking
+  n_hit <- length(hit_set)
+  n_uni <- length(universe_set)
+
+  map_dfr(seq_len(nrow(current.msetlib)), function(i) {
+    set_in_universe <- intersect(current.msetlib$member[[i]], universe_set)
+    tibble(pathway  = current.msetlib$name[i],
+           set_size = length(set_in_universe),
+           hits     = length(intersect(set_in_universe, hit_set)),
+           members  = paste(intersect(set_in_universe, hit_set), collapse = "; "))
+  }) |>
+    filter(set_size >= min_size) |>
+    mutate(
+      expected = set_size * n_hit / n_uni,
+      # P(X >= hits) under the hypergeometric null
+      p_value  = phyper(hits - 1, n_hit, n_uni - n_hit,
+                        set_size, lower.tail = FALSE),
+      fdr      = p.adjust(p_value, method = "BH"),
+      n_hits_total = n_hit,
+      n_universe   = n_uni
+    ) |>
+    arrange(p_value)
+}
+```
+
+```{r}
+#| label: run-ora-both-backgrounds
+#| echo: true
+
+# Same hits, two universes: the full SMPDB library vs the measured metabolome
+ora_results <- contrast_defs |>
+  mutate(
+    library_bg  = map2(tp, direction,
+                       ~ run_smpdb_ora(contrast_hits(.x, .y), smpdb_universe)),
+    measured_bg = map2(tp, direction,
+                       ~ run_smpdb_ora(contrast_hits(.x, .y), contrast_universe(.x)))
+  )
+
+ora_long <- ora_results |>
+  dplyr::select(contrast, library_bg, measured_bg) |>
+  pivot_longer(c(library_bg, measured_bg),
+               names_to = "background", values_to = "result") |>
+  unnest(result) |>
+  mutate(background = recode(background,
+                             library_bg = "SMPDB library",
+                             measured_bg = "Measured metabolome"))
+```
+
+### Results Under Each Background
+
+```{r}
+#| label: tbl-top-hits
+#| echo: true
+
+# Leading pathway per contrast under each background
+ora_long |>
+  group_by(contrast, background) |>
+  slice_min(p_value, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  dplyr::select(contrast, background, pathway, set_size, hits, expected, p_value, fdr) |>
+  arrange(contrast, background) |>
+  knitr::kable(caption = "Top pathway per contrast, by background", digits = 4)
+```
+
+```{r}
+#| label: tbl-significant-counts
+#| echo: true
+
+# How many pathways clear conventional thresholds under each background?
+ora_long |>
+  group_by(contrast, background) |>
+  summarise(n_raw_p05 = sum(p_value < 0.05),
+            n_fdr_05  = sum(fdr < 0.05),
+            .groups = "drop") |>
+  pivot_wider(names_from = background, values_from = c(n_raw_p05, n_fdr_05)) |>
+  knitr::kable(caption = "Pathways passing thresholds, by contrast and background")
+```
+
+The universe shrinks from 1002 library compounds to 169 measured ones, and the count of
+pathways clearing raw p < 0.05 roughly halves at every contrast. Only one pathway was ever
+FDR-significant — under the library background, in the 9m downregulated contrast — and it
+is not under the measured background. The 15-month contrasts are empty either way.
+
+## Visualising the Background Effect
+
+```{r}
+#| label: fig-background-effect
+#| echo: true
+#| fig-width: 12
+#| fig-height: 8
+
+# Same pathways, same hits, two nulls
+p_background <- ora_long |>
+  dplyr::select(contrast, background, pathway, p_value) |>
+  pivot_wider(names_from = background, values_from = p_value) |>
+  ggplot(aes(x = -log10(`SMPDB library`), y = -log10(`Measured metabolome`))) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey50") +
+  geom_hline(yintercept = -log10(0.05), color = "red",
+             linetype = "dotted", linewidth = 0.4) +
+  geom_vline(xintercept = -log10(0.05), color = "red",
+             linetype = "dotted", linewidth = 0.4) +
+  geom_point(alpha = 0.5, size = 1.8) +
+  facet_wrap(~ contrast, ncol = 3) +
+  labs(title = "Pathway significance weakens under the measured background",
+       subtitle = "Each point is one SMPDB pathway; dotted lines mark p = 0.05",
+       x = expression(-log[10] * "(p), SMPDB library background"),
+       y = expression(-log[10] * "(p), measured background")) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold", size = 13),
+        strip.text = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_background
+```
+
+```{r}
+#| label: fig-observed-expected
+#| echo: true
+#| fig-width: 12
+#| fig-height: 8
+
+# Under a correct null, points scatter around the identity line
+p_obs_exp <- ora_long |>
+  filter(background == "Measured metabolome") |>
+  ggplot(aes(x = expected, y = hits)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey50") +
+  geom_point(aes(size = set_size), alpha = 0.55) +
+  facet_wrap(~ contrast, ncol = 3) +
+  scale_size_continuous(range = c(1.2, 6), name = "Set size") +
+  labs(title = "Observed vs expected pathway hits, measured background",
+       subtitle = "Points on the dashed line carry no enrichment signal",
+       x = "Expected hits", y = "Observed hits") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold", size = 13),
+        strip.text = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_obs_exp
+```
+
+## Which Metabolites Drive the Strongest Contrast
+
+The 9-month downregulated set is the only contrast retaining appreciable signal. Listing
+the metabolites behind its leading pathways shows what that signal actually is.
+
+```{r}
+#| label: tbl-drivers
+#| echo: true
+
+# Metabolites underlying the top pathways of the strongest contrast
+ora_long |>
+  filter(contrast == "9m — Downregulated",
+         background == "Measured metabolome") |>
+  head(8) |>
+  dplyr::select(pathway, set_size, hits, expected, p_value, fdr, members) |>
+  knitr::kable(caption = "9m downregulated: leading pathways and their members",
+               digits = 4)
+```
+
+The member lists overlap heavily — a small group of TCA-adjacent intermediates and
+carnitine recurring across nominally distinct pathways. These are not eight independent
+findings but one signal counted eight times, which is a further reason not to read the
+raw p-values at face value.
+
+## Interpretation
+
+The Part 4 result needs qualifying rather than discarding. Restricting the universe to
+metabolites the Metabolon panel can actually detect shrinks it from 1002 compounds to 169
+and weakens every contrast by roughly an order of magnitude: the 9-month downregulated
+set, the strongest, moves from a minimum FDR of 0.015 to 0.17. No pathway is
+FDR-significant at any contrast under the corrected background, and the 15-month contrasts
+show nothing at all. What survives is a nominal, uncorrected tendency for depletion of
+TCA-adjacent intermediates and carnitine at 9 months — worth noting, not worth asserting.
+
+The reason the library background flatters these pathways is coverage. With only ~20% of
+measured metabolites present in SMPDB, and that subset skewed toward amino-acid and
+central-carbon chemistry, the library null assigns implausibly small expected counts to
+exactly the pathways the assay happens to cover, while the lipid species carrying this
+phenotype are invisible to the test. The amino-acid flavour of the Part 4 result is
+therefore partly a property of the database rather than of the mutant liver.
+
+None of this undermines Parts 1-3. Their curated sub-pathway analysis uses the platform's
+own annotations, retains every measured metabolite, and tests fold-change distributions
+rather than thresholded counts, all of which sidestep the failure mode diagnosed here.
+Part 4 is best read as a methodological control.
+
+A database-driven test would become worthwhile with a lipid-aware resource such as
+LIPID MAPS or RefMet, where the coverage bias runs the other way.
+
+## Save Outputs
+
+```{r}
+#| label: save-outputs
+#| echo: true
+
+# Mapping, coverage and corrected enrichment results
+saveRDS(measured_mapped,   file.path(output_dir, "measured_mapped.rds"))
+saveRDS(coverage_by_class, file.path(output_dir, "coverage_by_class.rds"))
+saveRDS(ora_long,          file.path(output_dir, "ora_both_backgrounds.rds"))
+
+# Figures
+ggsave(file.path(output_dir, "fig_coverage_9m.png"),
+       p_coverage_9m, width = 10, height = 6, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_coverage_15m.png"),
+       p_coverage_15m, width = 10, height = 6, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_background_effect.png"),
+       p_background, width = 12, height = 8, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_observed_expected.png"),
+       p_obs_exp, width = 12, height = 8, dpi = 300, bg = "white")
+```
+
+## Session Info
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+#| label: session-info
+#| echo: false
+sessionInfo()
+```
+:::
+
+```{r}
+#| label: purl
+#| echo: false
+#| eval: false
+
+# Uncomment to extract R code from this document
+# knitr::purl(here("05_enrichment_background_audit.qmd"),
+#             output = here("05_enrichment_background_audit.R"))
+```

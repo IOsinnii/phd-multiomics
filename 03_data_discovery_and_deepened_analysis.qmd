@@ -1,0 +1,929 @@
+---
+title: "Integrated Transcriptome–Metabolome Analysis of Rps2-A226Y Mutant Liver"
+subtitle: "Part 3: Data Discovery & Deepened Analysis"
+author: "Ivan Osinnii"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    df-print: paged
+    fig-width: 10
+    fig-height: 7
+execute:
+  warning: false
+  message: false
+  freeze: true
+---
+
+```{r}
+#| label: setup
+#| echo: false
+
+knitr::opts_chunk$set(dpi = 150)
+```
+
+## Overview
+
+This document deepens the integrated analysis from Parts 1–2. We add:
+comprehensive data discovery (sub-pathway distributions, volcano plots,
+metabolite ID mapping via MetaboAnalyst API), a detailed sphingolipid pathway
+dissection (ceramide chain-length, SM species, gene panel), lysosomal
+dysfunction analysis (cathepsins, XIAP axis), pre-ranked GSEA with fgsea,
+and cross-omics concordance scoring.
+
+## Libraries
+
+```{r}
+#| label: load-libraries
+#| echo: true
+
+# Core packages + enrichment and API tools
+library(tidyverse)
+library(here)
+library(pals)
+library(patchwork)
+library(ggrepel)
+library(scales)
+library(fgsea)
+library(msigdbr)
+library(httr2)
+library(jsonlite)
+```
+
+## Data Loading
+
+All cleaned data comes from Part 1 outputs.
+
+```{r}
+#| label: load-data
+#| echo: true
+
+# Load cleaned datasets from Script 01
+input_dir <- here("output", "01_data_loading_and_pathway_analysis")
+
+met_9m  <- readRDS(file.path(input_dir, "met_9m_clean.rds"))
+met_15m <- readRDS(file.path(input_dir, "met_15m_clean.rds"))
+tx_9m   <- readRDS(file.path(input_dir, "tx_9m_clean.rds"))
+tx_15m  <- readRDS(file.path(input_dir, "tx_15m_clean.rds"))
+pathway_map <- readRDS(file.path(input_dir, "pathway_map.rds"))
+
+cat("Data loaded:", nrow(met_9m), "met 9m,", nrow(met_15m), "met 15m,",
+    nrow(tx_9m), "tx 9m,", nrow(tx_15m), "tx 15m\n")
+```
+
+## Enhanced Data Discovery
+
+### Super-Pathway Distributions
+
+Metabolon assigns each metabolite to a super-pathway (broad class) and
+sub-pathway (specific category). We compare class composition and significance
+rates across timepoints.
+
+```{r}
+#| label: fig-super-pathway-dist
+#| echo: true
+#| fig-width: 14
+#| fig-height: 6
+
+# Combine metabolomics from both timepoints
+met_combined <- bind_rows(
+  met_9m |> dplyr::select(biochemical, super_pathway, sub_pathway,
+                          log2fc, p_value, significant) |>
+    mutate(timepoint = "9 Months"),
+  met_15m |> dplyr::select(biochemical, super_pathway, sub_pathway,
+                           log2fc, p_value, significant) |>
+    mutate(timepoint = "15 Months")
+)
+
+# Count metabolites and significance rate per super-pathway
+sp_summary <- met_combined |>
+  group_by(timepoint, super_pathway) |>
+  summarise(
+    n_total = n(),
+    n_sig = sum(significant),
+    pct_sig = n_sig / n_total * 100,
+    .groups = "drop"
+  ) |>
+  mutate(super_pathway = fct_reorder(super_pathway, n_total, .fun = max))
+
+sp_cols <- unname(glasbey(n_distinct(sp_summary$super_pathway)))
+
+# Panel A: Total metabolites per super-pathway
+p_sp_count <- ggplot(sp_summary,
+       aes(y = super_pathway, x = n_total, fill = super_pathway)) +
+  geom_col(alpha = 0.85) +
+  geom_text(aes(label = n_total), hjust = -0.1, size = 3) +
+  facet_wrap(~ timepoint) +
+  scale_fill_manual(values = sp_cols, guide = "none") +
+  labs(title = "Metabolite Counts by Super-Pathway",
+       x = "Number of metabolites", y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"))
+
+# Panel B: Significance rate per super-pathway
+p_sp_sig <- ggplot(sp_summary,
+       aes(y = super_pathway, x = pct_sig, fill = super_pathway)) +
+  geom_col(alpha = 0.85) +
+  geom_text(aes(label = sprintf("%.0f%%", pct_sig)), hjust = -0.1, size = 3) +
+  geom_vline(xintercept = 5, linetype = "dashed", color = "grey50", alpha = 0.5) +
+  facet_wrap(~ timepoint) +
+  scale_fill_manual(values = sp_cols, guide = "none") +
+  labs(title = "Significance Rate by Super-Pathway (p < 0.05)",
+       x = "% significant", y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"))
+
+p_super_pathway <- p_sp_count / p_sp_sig +
+  plot_annotation(
+    title = "Metabolite Class Distribution: Rps2-A226Y Mutant vs WT",
+    theme = theme(plot.title = element_text(face = "bold", size = 14))
+  )
+
+p_super_pathway
+```
+
+### Volcano Plots {.tabset}
+
+Standard volcano visualizations of all four datasets. Labels highlight the most
+significant features. Metabolomics significance: p < 0.05; Transcriptomics: FDR < 0.05.
+
+```{r}
+#| label: volcano-function
+#| echo: true
+
+# Reusable volcano plot (uses pre-computed 'significant' column)
+plot_volcano <- function(df, fc_col, pval_col, label_col,
+                         title_label, sig_line_p = 0.05) {
+  plot_df <- df |>
+    mutate(
+      .fc = .data[[fc_col]],
+      .neg_log10p = -log10(pmax(.data[[pval_col]], 1e-10)),
+      .label = .data[[label_col]],
+      .direction = case_when(
+        significant & .fc > 0 ~ "Up",
+        significant & .fc < 0 ~ "Down",
+        TRUE ~ "NS"
+      )
+    )
+
+  ggplot(plot_df, aes(x = .fc, y = .neg_log10p, color = .direction)) +
+    geom_point(aes(alpha = .direction, size = .direction)) +
+    geom_hline(yintercept = -log10(sig_line_p),
+               linetype = "dashed", color = "grey40", linewidth = 0.4) +
+    geom_text_repel(
+      data = \(d) d |> filter(.direction != "NS") |>
+        slice_max(.neg_log10p, n = 12),
+      aes(label = .label), size = 2.3, max.overlaps = 12,
+      segment.color = "grey60", show.legend = FALSE
+    ) +
+    scale_color_manual(values = c(Up = "#d95f02", Down = "#1b9e77",
+                                  NS = "#cccccc"), name = NULL) +
+    scale_alpha_manual(values = c(Up = 0.8, Down = 0.8, NS = 0.15),
+                       guide = "none") +
+    scale_size_manual(values = c(Up = 1.8, Down = 1.8, NS = 0.5),
+                      guide = "none") +
+    labs(title = title_label,
+         x = expression(log[2] ~ "Fold Change"),
+         y = expression(-log[10] ~ "(p-value)")) +
+    theme_minimal(base_size = 10) +
+    theme(plot.title = element_text(face = "bold", size = 11),
+          panel.grid.minor = element_blank(), legend.position = "bottom")
+}
+```
+
+::: {.panel-tabset}
+
+#### Metabolomics
+
+```{r}
+#| label: fig-volcano-met
+#| echo: true
+#| fig-width: 14
+#| fig-height: 6
+
+# Volcano plots — metabolomics at both timepoints
+p_v_met9 <- plot_volcano(met_9m, "log2fc", "p_value", "biochemical",
+                         "Metabolomics — 9 Months (p < 0.05)")
+p_v_met15 <- plot_volcano(met_15m, "log2fc", "p_value", "biochemical",
+                          "Metabolomics — 15 Months (p < 0.05)")
+p_volcano_met <- p_v_met9 + p_v_met15 + plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+p_volcano_met
+```
+
+#### Transcriptomics
+
+```{r}
+#| label: fig-volcano-tx
+#| echo: true
+#| fig-width: 14
+#| fig-height: 6
+
+# Volcano plots — transcriptomics at both timepoints
+p_v_tx9 <- plot_volcano(tx_9m, "log2fc", "p_value", "gene_name",
+                        "Transcriptomics — 9 Months (FDR < 0.05)")
+p_v_tx15 <- plot_volcano(tx_15m, "log2fc", "p_value", "gene_name",
+                         "Transcriptomics — 15 Months (FDR < 0.05)")
+p_volcano_tx <- p_v_tx9 + p_v_tx15 + plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+p_volcano_tx
+```
+
+:::
+
+### Data Quality & Metabolite ID Mapping
+
+The 9-month metabolomics file includes KEGG, HMDB, and PubChem identifiers;
+the 15-month file does not. We use the MetaboAnalyst compound mapping API to
+retrieve standardized IDs for the 15-month metabolites.
+
+```{r}
+#| label: metabolite-overlap
+#| echo: true
+
+# How many metabolites are shared between timepoints?
+shared <- intersect(met_9m$biochemical, met_15m$biochemical)
+only_9m <- setdiff(met_9m$biochemical, met_15m$biochemical)
+only_15m <- setdiff(met_15m$biochemical, met_9m$biochemical)
+
+tibble(
+  Category = c("Shared", "9m only", "15m only"),
+  Count = c(length(shared), length(only_9m), length(only_15m))
+) |> knitr::kable(caption = "Metabolite overlap between timepoints")
+```
+
+```{r}
+#| label: metaboanalyst-id-mapping
+#| echo: true
+
+# Map 15m metabolite names to standardised IDs via MetaboAnalyst REST API
+# Strip trailing asterisks (Metabolon confidence markers) before querying
+# Replace semicolons in names (API uses ; as delimiter)
+met_names_clean <- met_15m$biochemical |>
+  str_remove_all("\\*$") |>
+  str_replace_all(";", ",") |>
+  str_trim()
+
+body <- list(
+  queryList = paste(met_names_clean, collapse = ";"),
+  inputType = "name"
+)
+
+api_result <- request("https://rest.xialab.ca/api/mapcompounds") |>
+  req_body_json(body) |>
+  req_timeout(120) |>
+  req_perform() |>
+  resp_body_json()
+
+# Convert API response to tidy data frame
+met_id_map <- tibble(
+  biochemical = met_15m$biochemical,
+  query_clean = met_names_clean,
+  match       = api_result$Match,
+  hmdb        = api_result$HMDB,
+  kegg        = api_result$KEGG,
+  pubchem     = api_result$PubChem
+) |>
+  mutate(mapped = hmdb != "" & !is.na(hmdb))
+
+cat("MetaboAnalyst mapping:", sum(met_id_map$mapped), "/",
+    nrow(met_id_map), "metabolites mapped to HMDB IDs\n")
+```
+
+```{r}
+#| label: fig-fc-distribution
+#| echo: true
+#| fig-width: 12
+#| fig-height: 5
+
+# Fold-change distribution comparison
+fc_combined <- bind_rows(
+  met_9m  |> transmute(log2fc, layer = "Metabolomics",    timepoint = "9m"),
+  met_15m |> transmute(log2fc, layer = "Metabolomics",    timepoint = "15m"),
+  tx_9m   |> transmute(log2fc, layer = "Transcriptomics", timepoint = "9m"),
+  tx_15m  |> transmute(log2fc, layer = "Transcriptomics", timepoint = "15m")
+)
+
+p_fc_distribution <- ggplot(fc_combined, aes(x = log2fc, fill = timepoint)) +
+  geom_density(alpha = 0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
+  facet_wrap(~ layer, scales = "free") +
+  scale_fill_manual(values = c("9m" = "#66a61e", "15m" = "#7570b3"),
+                    name = "Timepoint") +
+  labs(title = "Fold-Change Distributions",
+       subtitle = "Rps2-A226Y Mutant vs WT, Liver",
+       x = expression(log[2] ~ "Fold Change"), y = "Density") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+p_fc_distribution
+```
+
+## Sphingolipid Deep Dive
+
+The manuscript identifies sphingolipid metabolism as the central adaptive
+response to ribosomal mistranslation. Here we dissect: (1) ceramide acyl
+chain-length specificity linked to Cers2/Cers4, (2) sphingomyelin species
+accumulation, and (3) a comprehensive gene panel for the pathway.
+
+### Ceramide Acyl Chain-Length Analysis
+
+Ceramide synthases Cers2 (downregulated) and Cers4 (upregulated) synthesise
+ceramides with C22–C27 and C18–C22 acyl chains respectively. We extract chain
+lengths from metabolite names to check whether this specificity is visible in
+the metabolome.
+
+```{r}
+#| label: fig-ceramide-chain-length
+#| echo: true
+#| fig-width: 12
+#| fig-height: 7
+
+# Filter sphingolipid metabolites and extract acyl chain lengths
+sl_subpathways <- c("Sphingomyelins", "Ceramides", "Lactosylceramides (LCER)")
+
+sl_met <- bind_rows(
+  met_9m  |> filter(sub_pathway %in% sl_subpathways) |> mutate(timepoint = "9 Months"),
+  met_15m |> filter(sub_pathway %in% sl_subpathways) |> mutate(timepoint = "15 Months")
+)
+
+# Parse the N-acyl chain carbon count from metabolite names
+# Pattern: d18:1/22:0 → second chain = 22
+sl_met <- sl_met |>
+  mutate(
+    acyl_carbon = as.integer(str_extract(biochemical, "(?<=/)\\d+(?=:)"))
+  ) |>
+  filter(!is.na(acyl_carbon))
+
+cat("Sphingolipid metabolites with parsed chain lengths:", nrow(sl_met), "\n")
+
+# Cers2/Cers4 substrate ranges for annotation
+cers_ranges <- tibble(
+  enzyme = c("Cers4 (C18–C22, up)", "Cers2 (C22–C27, down)"),
+  xmin = c(18, 22), xmax = c(22, 27),
+  ymin = -Inf, ymax = Inf
+)
+
+p_ceramide_chain <- ggplot(sl_met, aes(x = acyl_carbon, y = log2fc,
+                   color = sub_pathway, shape = significant)) +
+  geom_rect(data = cers_ranges, inherit.aes = FALSE,
+            aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
+                fill = enzyme),
+            alpha = 0.08) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_jitter(size = 2.5, width = 0.2, alpha = 0.8) +
+  facet_wrap(~ timepoint) +
+  scale_fill_manual(values = c("Cers4 (C18–C22, up)" = "#d95f02",
+                               "Cers2 (C22–C27, down)" = "#1b9e77"),
+                    name = "CerS substrate range") +
+  scale_color_manual(values = c("Sphingomyelins" = "#7570b3",
+                                "Ceramides" = "#e7298a",
+                                "Lactosylceramides (LCER)" = "#66a61e"),
+                     name = "Sub-pathway") +
+  scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), name = "p < 0.05") +
+  labs(title = "Sphingolipid Metabolites by Acyl Chain Length",
+       subtitle = "Shaded regions = ceramide synthase substrate specificity",
+       x = "N-Acyl Chain Carbon Count",
+       y = expression(log[2] ~ "FC (Mutant / WT)")) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank(), legend.position = "bottom") +
+  guides(fill = guide_legend(nrow = 1), color = guide_legend(nrow = 1))
+p_ceramide_chain
+```
+
+### Sphingomyelin Species Accumulation
+
+```{r}
+#| label: fig-sm-species
+#| echo: true
+#| fig-width: 10
+#| fig-height: 8
+
+# All SM species across timepoints
+sm_data <- bind_rows(
+  met_9m  |> filter(sub_pathway == "Sphingomyelins") |>
+    dplyr::select(biochemical, log2fc, p_value, significant) |>
+    mutate(timepoint = "9m"),
+  met_15m |> filter(sub_pathway == "Sphingomyelins") |>
+    dplyr::select(biochemical, log2fc, p_value, significant) |>
+    mutate(timepoint = "15m")
+)
+
+# Shorten names for plotting
+sm_data <- sm_data |>
+  mutate(label = str_replace(biochemical, "sphingomyelin", "SM") |>
+           str_remove("\\*$") |> str_trim())
+
+# Order by 15m fold change
+sm_order <- sm_data |>
+  filter(timepoint == "15m") |>
+  arrange(log2fc) |>
+  pull(label)
+sm_data <- sm_data |> mutate(label = factor(label, levels = sm_order))
+
+p_sm_species <- ggplot(sm_data, aes(x = log2fc, y = label, color = timepoint,
+                    shape = significant)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_point(size = 3, alpha = 0.8, position = position_dodge(width = 0.5)) +
+  scale_color_manual(values = c("9m" = "#66a61e", "15m" = "#7570b3"),
+                     name = "Timepoint") +
+  scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), name = "p < 0.05") +
+  labs(title = "Sphingomyelin Species: Fold Change (Mutant / WT)",
+       x = expression(log[2] ~ "Fold Change"), y = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank(),
+        axis.text.y = element_text(size = 8))
+p_sm_species
+```
+
+### Sphingolipid Pathway Gene Panel
+
+Complete gene panel for sphingolipid biosynthesis (de novo arm), ceramide
+metabolism (salvage pathway), SM conversion, and the S1P signalling axis.
+
+```{r}
+#| label: fig-sl-gene-panel
+#| echo: true
+#| fig-width: 10
+#| fig-height: 9
+
+# Full sphingolipid gene panel with pathway arm annotations
+sl_genes <- tribble(
+  ~gene_name, ~arm,
+  "Sptlc1", "De novo synthesis", "Sptlc2", "De novo synthesis",
+  "Kdsr",   "De novo synthesis",
+  "Cers1",  "De novo synthesis", "Cers2", "De novo synthesis",
+  "Cers3",  "De novo synthesis", "Cers4", "De novo synthesis",
+  "Cers5",  "De novo synthesis", "Cers6", "De novo synthesis",
+  "Degs1",  "De novo synthesis", "Degs2", "De novo synthesis",
+  "Sgms1",  "SM conversion", "Sgms2", "SM conversion",
+  "Ugcg",   "SM conversion",
+  "Smpd1",  "SM conversion", "Smpd2", "SM conversion",
+  "Smpd3",  "SM conversion",
+  "Asah1",  "Salvage pathway", "Asah2", "Salvage pathway",
+  "Acer1",  "Salvage pathway", "Acer2", "Salvage pathway",
+  "Acer3",  "Salvage pathway",
+  "Gba",    "Salvage pathway", "Gba2",  "Salvage pathway",
+  "Sphk1",  "S1P axis", "Sphk2", "S1P axis", "Sgpl1", "S1P axis"
+)
+
+# Look up gene expression at both timepoints
+sl_panel <- sl_genes |>
+  left_join(tx_9m  |> transmute(gene_name, log2fc_9m = log2fc,
+                                pval_9m = p_value, fdr_9m = fdr),
+            by = "gene_name") |>
+  left_join(tx_15m |> transmute(gene_name, log2fc_15m = log2fc,
+                                pval_15m = p_value, fdr_15m = fdr),
+            by = "gene_name")
+
+# Reshape for heatmap
+sl_heatmap <- sl_panel |>
+  pivot_longer(cols = c(log2fc_9m, log2fc_15m),
+               names_to = "tp_var", values_to = "log2fc") |>
+  mutate(
+    timepoint = if_else(tp_var == "log2fc_9m", "9 Months", "15 Months"),
+    fdr  = if_else(tp_var == "log2fc_9m", fdr_9m, fdr_15m),
+    pval = if_else(tp_var == "log2fc_9m", pval_9m, pval_15m),
+    sig_label = case_when(
+      fdr < 0.01  ~ "**",
+      fdr < 0.05  ~ "*",
+      pval < 0.05 ~ "\u2020",
+      TRUE        ~ ""
+    ),
+    gene_name = factor(gene_name, levels = rev(sl_genes$gene_name))
+  )
+
+vmax_sl <- max(abs(sl_heatmap$log2fc), na.rm = TRUE)
+
+p_sl_gene_panel <- ggplot(sl_heatmap, aes(x = timepoint, y = gene_name, fill = log2fc)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = sig_label), size = 4, color = "black") +
+  facet_grid(arm ~ ., scales = "free_y", space = "free_y", switch = "y") +
+  scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b",
+                       midpoint = 0, limits = c(-vmax_sl, vmax_sl),
+                       name = expression(log[2] ~ "FC"),
+                       na.value = "grey90") +
+  labs(title = "Sphingolipid Pathway Gene Expression",
+       subtitle = "** FDR < 0.01, * FDR < 0.05, \u2020 p < 0.05",
+       x = NULL, y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"),
+        strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 0, face = "bold", size = 9),
+        panel.grid = element_blank(),
+        axis.text.y = element_text(face = "italic"))
+p_sl_gene_panel
+```
+
+## Lysosomal Dysfunction Module
+
+The manuscript describes a decline in lysosomal biogenesis, especially
+cathepsins. We visualise the full lysosomal gene cluster and the
+XIAP–CathepsinB–SMPD1 anti-apoptosis axis.
+
+### Cathepsin & Lysosomal Gene Panel
+
+```{r}
+#| label: fig-lysosomal-panel
+#| echo: true
+#| fig-width: 10
+#| fig-height: 10
+
+# Cathepsin and lysosomal gene panel
+lyso_genes <- tribble(
+  ~gene_name, ~category,
+  "Ctsa", "Cathepsin", "Ctsb", "Cathepsin", "Ctsc", "Cathepsin",
+  "Ctsd", "Cathepsin", "Ctse", "Cathepsin", "Ctsh", "Cathepsin",
+  "Ctsk", "Cathepsin", "Ctsl", "Cathepsin", "Ctso", "Cathepsin",
+  "Ctss", "Cathepsin", "Ctsw", "Cathepsin", "Ctsz", "Cathepsin",
+  "Ctsf", "Cathepsin",
+  "Lamp1",  "Membrane & transport", "Lamp2",   "Membrane & transport",
+  "Lamtor1","Membrane & transport", "Lamtor2", "Membrane & transport",
+  "Lamtor3","Membrane & transport", "Laptm5",  "Membrane & transport",
+  "Hexb",   "Hydrolase", "Hexdc",  "Hydrolase",
+  "Glb1",   "Hydrolase", "Idua",   "Hydrolase",
+  "Gusb",   "Hydrolase", "Fuca1",  "Hydrolase",
+  "Tpp1",   "Hydrolase", "Man2b1", "Hydrolase",
+  "Pla2g15","Hydrolase",
+  "Glmp",   "Other lysosomal", "Mfsd1",  "Other lysosomal",
+  "Slc15a4","Other lysosomal", "Slc36a1","Other lysosomal",
+  "Stard3", "Other lysosomal", "Engase", "Other lysosomal",
+  "Xiap",   "Anti-apoptosis"
+)
+
+# Look up expression
+lyso_panel <- lyso_genes |>
+  left_join(tx_9m  |> transmute(gene_name, log2fc_9m = log2fc,
+                                pval_9m = p_value, fdr_9m = fdr),
+            by = "gene_name") |>
+  left_join(tx_15m |> transmute(gene_name, log2fc_15m = log2fc,
+                                pval_15m = p_value, fdr_15m = fdr),
+            by = "gene_name")
+
+# Reshape for heatmap
+lyso_heatmap <- lyso_panel |>
+  pivot_longer(cols = c(log2fc_9m, log2fc_15m),
+               names_to = "tp_var", values_to = "log2fc") |>
+  mutate(
+    timepoint = if_else(tp_var == "log2fc_9m", "9 Months", "15 Months"),
+    fdr  = if_else(tp_var == "log2fc_9m", fdr_9m, fdr_15m),
+    pval = if_else(tp_var == "log2fc_9m", pval_9m, pval_15m),
+    sig_label = case_when(fdr < 0.01 ~ "**", fdr < 0.05 ~ "*",
+                          pval < 0.05 ~ "\u2020", TRUE ~ ""),
+    gene_name = factor(gene_name, levels = rev(lyso_genes$gene_name))
+  )
+
+vmax_lyso <- max(abs(lyso_heatmap$log2fc), na.rm = TRUE)
+
+p_lyso_panel <- ggplot(lyso_heatmap, aes(x = timepoint, y = gene_name, fill = log2fc)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = sig_label), size = 3.5, color = "black") +
+  facet_grid(category ~ ., scales = "free_y", space = "free_y", switch = "y") +
+  scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b",
+                       midpoint = 0, limits = c(-vmax_lyso, vmax_lyso),
+                       name = expression(log[2] ~ "FC"),
+                       na.value = "grey90") +
+  labs(title = "Lysosomal Gene Expression Panel",
+       subtitle = "** FDR < 0.01, * FDR < 0.05, \u2020 p < 0.05",
+       x = NULL, y = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(plot.title = element_text(face = "bold"),
+        strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 0, face = "bold", size = 9),
+        panel.grid = element_blank(),
+        axis.text.y = element_text(face = "italic"))
+p_lyso_panel
+```
+
+### Anti-Apoptosis Axis: XIAP–CathepsinB–SMPD1
+
+The manuscript proposes that downregulated acid sphingomyelinase (SMPD1) reduces
+lysosomal ceramide generation, which decreases CathepsinB release to the cytosol,
+preserving XIAP and blocking apoptosis.
+
+```{r}
+#| label: fig-xiap-axis
+#| echo: true
+#| fig-width: 8
+#| fig-height: 4.5
+
+# XIAP-CtsB-Smpd1 axis: focused trajectory panel
+axis_genes <- c("Xiap", "Ctsb", "Smpd1")
+
+axis_data <- tibble(gene_name = axis_genes) |>
+  left_join(tx_9m  |> transmute(gene_name, log2fc_9m = log2fc, fdr_9m = fdr),
+            by = "gene_name") |>
+  left_join(tx_15m |> transmute(gene_name, log2fc_15m = log2fc, fdr_15m = fdr),
+            by = "gene_name") |>
+  pivot_longer(cols = c(log2fc_9m, log2fc_15m),
+               names_to = "tp_var", values_to = "log2fc") |>
+  mutate(
+    timepoint = if_else(tp_var == "log2fc_9m", "9 Months", "15 Months"),
+    fdr = if_else(tp_var == "log2fc_9m", fdr_9m, fdr_15m),
+    sig = fdr < 0.05,
+    gene_name = factor(gene_name, levels = axis_genes)
+  )
+
+p_xiap_axis <- ggplot(axis_data, aes(x = timepoint, y = log2fc, fill = log2fc > 0)) +
+  geom_col(alpha = 0.85, width = 0.6) +
+  geom_text(aes(label = sprintf("%.2f%s", log2fc, if_else(sig, "*", ""))),
+            vjust = if_else(axis_data$log2fc > 0, -0.3, 1.3), size = 3.5) +
+  geom_hline(yintercept = 0, color = "grey50") +
+  facet_wrap(~ gene_name, nrow = 1) +
+  scale_fill_manual(values = c(`TRUE` = "#d95f02", `FALSE` = "#1b9e77"),
+                    guide = "none") +
+  labs(title = "Anti-Apoptosis Axis: XIAP\u2013CathepsinB\u2013SMPD1",
+       subtitle = "Rps2-A226Y Mutant vs WT, Liver (* FDR < 0.05)",
+       y = expression(log[2] ~ "FC"), x = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"),
+        strip.text = element_text(face = "bold.italic", size = 12),
+        panel.grid.minor = element_blank())
+p_xiap_axis
+```
+
+## Gene Set Enrichment Analysis (GSEA)
+
+Pre-ranked GSEA uses the full transcriptome ranking (not just significant genes),
+testing whether curated gene sets are enriched at the extremes of the ranked list.
+We use fgsea with MSigDB Hallmark and KEGG gene sets for mouse.
+
+```{r}
+#| label: gsea-preranked
+#| echo: true
+
+# Prepare ranked gene lists: stat = sign(log2FC) * -log10(p)
+make_rank <- function(tx_data) {
+  stats <- tx_data |>
+    filter(!is.na(gene_name), !is.na(p_value)) |>
+    mutate(rank_stat = sign(log2fc) * -log10(pmax(p_value, 1e-10))) |>
+    distinct(gene_name, .keep_all = TRUE)
+  rank_vec <- stats$rank_stat
+  names(rank_vec) <- stats$gene_name
+  sort(rank_vec, decreasing = TRUE)
+}
+
+ranks_9m  <- make_rank(tx_9m)
+ranks_15m <- make_rank(tx_15m)
+
+# Load mouse gene sets from MSigDB (Hallmark + KEGG)
+hallmark_df <- msigdbr(species = "Mus musculus", collection = "H")
+hallmark_sets <- split(hallmark_df$gene_symbol, hallmark_df$gs_name)
+kegg_df <- msigdbr(species = "Mus musculus", collection = "C2",
+                   subcollection = "CP:KEGG_MEDICUS")
+kegg_sets <- split(kegg_df$gene_symbol, kegg_df$gs_name)
+
+gene_sets <- c(hallmark_sets, kegg_sets)
+cat("Gene sets loaded:", length(hallmark_sets), "Hallmark +",
+    length(kegg_sets), "KEGG =", length(gene_sets), "total\n")
+
+# Run fgsea
+set.seed(8471)
+gsea_9m  <- fgsea(pathways = gene_sets, stats = ranks_9m,
+                  minSize = 10, maxSize = 500) |> as_tibble()
+gsea_15m <- fgsea(pathways = gene_sets, stats = ranks_15m,
+                  minSize = 10, maxSize = 500) |> as_tibble()
+
+cat("Significant (padj < 0.05) — 9m:", sum(gsea_9m$padj < 0.05),
+    "| 15m:", sum(gsea_15m$padj < 0.05), "\n")
+```
+
+### GSEA Results Comparison
+
+```{r}
+#| label: fig-gsea-comparison
+#| echo: true
+#| fig-width: 14
+#| fig-height: 8
+
+# Merge GSEA results across timepoints
+gsea_merged <- gsea_9m |>
+  dplyr::select(pathway, NES_9m = NES, padj_9m = padj, size_9m = size) |>
+  full_join(
+    gsea_15m |>
+      dplyr::select(pathway, NES_15m = NES, padj_15m = padj, size_15m = size),
+    by = "pathway"
+  ) |>
+  mutate(
+    sig_cat = case_when(
+      padj_9m < 0.05 & padj_15m < 0.05 ~ "Both",
+      padj_9m < 0.05  ~ "9m only",
+      padj_15m < 0.05 ~ "15m only",
+      TRUE ~ "Neither"
+    ),
+    pathway_clean = pathway |>
+      str_remove("^HALLMARK_") |>
+      str_remove("^KEGG_MEDICUS_") |>
+      str_replace_all("_", " ") |>
+      str_to_title()
+  )
+
+sig_cols <- c(Both = "#e7298a", `9m only` = "#66a61e",
+              `15m only` = "#7570b3", Neither = "#cccccc")
+
+# Panel A: NES scatter (9m vs 15m)
+p_nes <- gsea_merged |>
+  mutate(sig_cat = factor(sig_cat,
+         levels = c("Neither", "9m only", "15m only", "Both"))) |>
+  arrange(sig_cat) |>
+  ggplot(aes(x = NES_9m, y = NES_15m, color = sig_cat)) +
+  geom_point(aes(alpha = sig_cat, size = sig_cat)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "grey60", linewidth = 0.3) +
+  geom_vline(xintercept = 0, color = "grey60", linewidth = 0.3) +
+  geom_text_repel(
+    data = \(d) d |> filter(sig_cat %in% c("Both", "9m only", "15m only")) |>
+      slice_max(abs(NES_15m) + abs(NES_9m), n = 15),
+    aes(label = pathway_clean), size = 2.5, max.overlaps = 15,
+    show.legend = FALSE
+  ) +
+  scale_color_manual(values = sig_cols, name = "Significant at") +
+  scale_alpha_manual(values = c(Neither = 0.1, `9m only` = 0.8,
+                                `15m only` = 0.8, Both = 0.9), guide = "none") +
+  scale_size_manual(values = c(Neither = 0.5, `9m only` = 2,
+                               `15m only` = 2, Both = 2.5), guide = "none") +
+  labs(title = "NES: 9m vs 15m",
+       x = "NES at 9 Months", y = "NES at 15 Months") +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+
+# Panel B: Top terms dot plot at 15m
+top_terms <- gsea_15m |>
+  filter(padj < 0.1) |>
+  arrange(padj) |>
+  head(20) |>
+  mutate(
+    pathway_clean = pathway |>
+      str_remove("^HALLMARK_") |>
+      str_remove("^KEGG_MEDICUS_") |>
+      str_replace_all("_", " ") |>
+      str_to_title(),
+    pathway_clean = fct_reorder(pathway_clean, NES)
+  )
+
+p_top <- ggplot(top_terms,
+       aes(x = NES, y = pathway_clean, size = size, color = padj)) +
+  geom_point(alpha = 0.8) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
+  scale_color_gradient(low = "#b2182b", high = "#fddbc7", name = "Adj. p") +
+  scale_size_continuous(range = c(2, 8), name = "Gene set size") +
+  labs(title = "Top GSEA Terms at 15 Months",
+       x = "Normalized Enrichment Score", y = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank())
+
+p_gsea_comparison <- p_nes + p_top +
+  plot_annotation(
+    title = "Gene Set Enrichment Analysis: fgsea + MSigDB",
+    subtitle = "Rps2-A226Y Mutant vs WT, Liver",
+    theme = theme(plot.title = element_text(face = "bold", size = 14))
+  )
+p_gsea_comparison
+```
+
+## Cross-Omics Pathway Concordance
+
+For each curated pathway, we test whether gene and metabolite changes agree in
+direction. A positive concordance score means both layers shift the same way;
+negative means they diverge.
+
+```{r}
+#| label: fig-concordance
+#| echo: true
+#| fig-width: 10
+#| fig-height: 6
+
+# Within-pathway concordance: gene vs metabolite direction agreement
+compute_concordance <- function(tx_data, met_data, pw_map) {
+  map_dfr(names(pw_map), function(pw_name) {
+    pw <- pw_map[[pw_name]]
+
+    gene_fc <- tx_data |>
+      filter(tolower(gene_name) %in% tolower(pw$genes), significant) |>
+      pull(log2fc)
+    met_fc <- met_data |>
+      filter(sub_pathway %in% pw$met_subpathways, significant) |>
+      pull(log2fc)
+
+    tibble(
+      pathway      = pw_name,
+      mean_gene_fc = if (length(gene_fc) > 0) mean(gene_fc) else NA_real_,
+      mean_met_fc  = if (length(met_fc) > 0)  mean(met_fc)  else NA_real_,
+      n_genes_sig  = length(gene_fc),
+      n_met_sig    = length(met_fc),
+      concordant   = !is.na(mean(gene_fc)) & !is.na(mean(met_fc)) &
+                     sign(mean(gene_fc)) == sign(mean(met_fc))
+    )
+  })
+}
+
+conc_9m  <- compute_concordance(tx_9m, met_9m, pathway_map) |>
+  mutate(timepoint = "9 Months")
+conc_15m <- compute_concordance(tx_15m, met_15m, pathway_map) |>
+  mutate(timepoint = "15 Months")
+
+conc_data <- bind_rows(conc_9m, conc_15m) |>
+  mutate(
+    concordance_score = case_when(
+      is.na(mean_gene_fc) | is.na(mean_met_fc) ~ NA_real_,
+      concordant ~ sqrt(abs(mean_gene_fc) * abs(mean_met_fc)) *
+                   sign(mean_gene_fc),
+      TRUE ~ -sqrt(abs(mean_gene_fc) * abs(mean_met_fc))
+    ),
+    label = case_when(
+      is.na(concordance_score) ~ "No data",
+      concordant ~ "Agree",
+      TRUE ~ "Disagree"
+    ),
+    pathway = fct_rev(fct_inorder(pathway))
+  )
+
+p_concordance <- ggplot(conc_data, aes(x = timepoint, y = pathway, fill = concordance_score)) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = sprintf("%s\nG:%d M:%d",
+                                label, n_genes_sig, n_met_sig)),
+            size = 3) +
+  scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b",
+                       midpoint = 0, name = "Concordance\nscore",
+                       na.value = "grey90") +
+  labs(title = "Cross-Omics Pathway Concordance",
+       subtitle = "Gene vs metabolite direction agreement (significant features)",
+       x = NULL, y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"), panel.grid = element_blank())
+p_concordance
+```
+
+## Save Outputs
+
+```{r}
+#| label: save-outputs
+#| echo: true
+
+# Create output directory
+output_dir <- here("output", "03_data_discovery_and_deepened_analysis")
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Data objects
+saveRDS(met_id_map,    file.path(output_dir, "met_15m_id_map.rds"))
+saveRDS(sl_panel,      file.path(output_dir, "sl_gene_panel.rds"))
+saveRDS(lyso_panel,    file.path(output_dir, "lyso_gene_panel.rds"))
+saveRDS(gsea_9m,       file.path(output_dir, "gsea_9m.rds"))
+saveRDS(gsea_15m,      file.path(output_dir, "gsea_15m.rds"))
+saveRDS(gsea_merged,   file.path(output_dir, "gsea_merged.rds"))
+saveRDS(conc_data,     file.path(output_dir, "concordance_data.rds"))
+
+# # Figures — save all named plot objects as 300 dpi PNGs for blog embedding
+ggsave(file.path(output_dir, "fig_super_pathway_dist.png"),
+       p_super_pathway, width = 14, height = 6, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_volcano_met.png"),
+       p_volcano_met, width = 14, height = 6, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_volcano_tx.png"),
+       p_volcano_tx, width = 14, height = 6, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_fc_distribution.png"),
+       p_fc_distribution, width = 12, height = 5, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_ceramide_chain_length.png"),
+       p_ceramide_chain, width = 12, height = 7, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_sm_species.png"),
+       p_sm_species, width = 10, height = 8, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_sl_gene_panel.png"),
+       p_sl_gene_panel, width = 10, height = 9, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_lysosomal_panel.png"),
+       p_lyso_panel, width = 10, height = 10, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_xiap_axis.png"),
+       p_xiap_axis, width = 8, height = 4.5, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_gsea_comparison.png"),
+       p_gsea_comparison, width = 14, height = 8, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_concordance.png"),
+       p_concordance, width = 10, height = 6, dpi = 300, bg = "white")
+
+cat("All data objects and figures saved to:", output_dir, "
+")
+```
+
+## Session Info
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+#| label: session-info
+#| echo: false
+sessionInfo()
+```
+:::
+
+```{r}
+#| label: purl
+#| echo: false
+#| eval: false
+
+# Uncomment to extract R code from this document
+# knitr::purl(here("03_data_discovery_and_deepened_analysis.qmd"),
+#             output = here("03_data_discovery_and_deepened_analysis.R"))
+```

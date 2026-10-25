@@ -1,0 +1,324 @@
+---
+title: "Integrated Transcriptome–Metabolome Analysis of Rps2-A226Y Mutant Liver"
+subtitle: "Part 4: MetaboAnalystR Pathway Enrichment"
+author: "Ivan Osinnii"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    df-print: paged
+    fig-width: 10
+    fig-height: 7
+execute:
+  warning: false
+  message: false
+  freeze: true
+---
+
+```{r}
+#| label: setup
+#| echo: false
+
+knitr::opts_chunk$set(dpi = 150)
+```
+
+## Overview
+
+This document extends the enrichment analysis started interactively with
+**MetaboAnalystR** (the R package underlying the MetaboAnalyst web server) to
+all metabolomics datasets and directional contrasts in the study. We run
+metabolite set over-representation analysis (MSEA/ORA) against the SMPDB
+pathway library for six contrasts: significant metabolites at 9 and 15
+months, each split into all/upregulated/downregulated subsets.
+
+> **Interpretive caveat**: MetaboAnalystR's ORA tests against the full set of
+> compounds in the SMPDB library as background, not against the 738
+> metabolites actually measured on the Metabolon platform. This differs from
+> the custom Fisher's exact ORA in Part 1, which correctly restricts the
+> background to detected metabolites. Results here should be read as a
+> complementary, curated-database perspective rather than a like-for-like
+> replacement.
+
+## Libraries
+
+```{r}
+#| label: load-libraries
+#| echo: true
+
+# Core packages plus MetaboAnalystR for pathway-level enrichment
+library(tidyverse)
+library(here)
+library(pals)
+library(patchwork)
+library(ggrepel)
+library(scales)
+library(MetaboAnalystR)
+```
+
+## Data Loading
+
+```{r}
+#| label: load-data
+#| echo: true
+
+# Load cleaned metabolomics data from Part 1
+input_dir <- here("output", "01_data_loading_and_pathway_analysis")
+
+met_9m  <- readRDS(file.path(input_dir, "met_9m_clean.rds"))
+met_15m <- readRDS(file.path(input_dir, "met_15m_clean.rds"))
+
+cat("Loaded:", nrow(met_9m), "met 9m,", nrow(met_15m), "met 15m\n")
+```
+
+## Building the Six Contrasts
+
+For each timepoint we define three metabolite sets: all significant
+metabolites (p < 0.05), and the upregulated/downregulated subsets. Splitting
+by direction lets ORA highlight pathways driven specifically by accumulation
+or depletion, which a single undirected hit list would mask.
+
+```{r}
+#| label: build-contrasts
+#| echo: true
+
+# Clean metabolite names (strip Metabolon confidence asterisks) for name mapping
+clean_names <- function(x) {
+  x |> stringr::str_remove_all("\\*$") |> stringr::str_trim() |> unique()
+}
+
+contrasts <- list(
+  "9m \u2014 All Significant"  = met_9m  |> filter(significant) |> pull(biochemical) |> clean_names(),
+  "9m \u2014 Upregulated"      = met_9m  |> filter(significant, log2fc > 0) |> pull(biochemical) |> clean_names(),
+  "9m \u2014 Downregulated"    = met_9m  |> filter(significant, log2fc < 0) |> pull(biochemical) |> clean_names(),
+  "15m \u2014 All Significant" = met_15m |> filter(significant) |> pull(biochemical) |> clean_names(),
+  "15m \u2014 Upregulated"     = met_15m |> filter(significant, log2fc > 0) |> pull(biochemical) |> clean_names(),
+  "15m \u2014 Downregulated"   = met_15m |> filter(significant, log2fc < 0) |> pull(biochemical) |> clean_names()
+)
+
+# Quick overview of contrast sizes
+tibble(
+  Contrast = names(contrasts),
+  N_metabolites = map_int(contrasts, length)
+) |> knitr::kable(caption = "Metabolite counts per contrast")
+```
+
+## MetaboAnalystR MSEA/ORA Workflow
+
+MetaboAnalystR writes cache and library files to the current working
+directory, so we point it at this script's output folder before running any
+analyses and restore the original working directory afterwards.
+
+```{r}
+#| label: msea-ora-function
+#| echo: true
+
+# Run MetaboAnalystR name mapping + ORA against SMPDB pathways for one contrast
+run_msea_ora <- function(compound_vec, contrast_label, msetlib = "smpdb_pathway",
+                          min_size = 2) {
+  mSet <- InitDataObjects("conc", "msetora", FALSE)
+  mSet <- Setup.MapData(mSet, compound_vec)
+  mSet <- CrossReferencing(mSet, "name")
+  mSet <- CreateMappingResultTable(mSet)
+
+  map_tbl <- mSet$dataSet$map.table
+  n_mapped <- sum(!is.na(map_tbl[, "Match"]) & map_tbl[, "Match"] != "NA")
+
+  mSet <- SetMetabolomeFilter(mSet, FALSE)
+  mSet <- SetCurrentMsetLib(mSet, msetlib, min_size)
+  mSet <- CalculateHyperScore(mSet)
+
+  as.data.frame(mSet$analSet$ora.mat) |>
+    tibble::rownames_to_column("pathway") |>
+    dplyr::rename(raw_p = `Raw p`, holm_p = `Holm p`, fdr = FDR) |>
+    dplyr::mutate(
+      contrast   = contrast_label,
+      n_query    = length(compound_vec),
+      n_mapped   = n_mapped,
+      pct_mapped = n_mapped / length(compound_vec) * 100
+    )
+}
+```
+
+```{r}
+#| label: run-all-contrasts
+#| echo: true
+
+# Point MetaboAnalystR at this script's output folder for cache/library files
+output_dir <- here("output", "04_metaboanalystr_enrichment")
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+original_wd <- getwd()
+setwd(output_dir)
+
+# Run MSEA/ORA for all six contrasts against SMPDB pathways
+ora_all <- imap_dfr(contrasts, ~ run_msea_ora(.x, .y))
+
+# Restore the original working directory once MetaboAnalystR calls are done
+setwd(original_wd)
+
+cat("ORA completed for", n_distinct(ora_all$contrast), "contrasts,",
+    n_distinct(ora_all$pathway), "unique SMPDB pathways tested\n")
+```
+
+### Name Mapping Rates
+
+```{r}
+#| label: mapping-rate-table
+#| echo: true
+
+# Compound name mapping success per contrast (from MetaboAnalystR's internal dictionary)
+ora_all |>
+  distinct(contrast, n_query, n_mapped, pct_mapped) |>
+  arrange(contrast) |>
+  knitr::kable(digits = 1, caption = "Compound name mapping rate by contrast")
+```
+
+## Figure: Top Pathways by Direction {.tabset}
+
+Bar charts of the top 10 SMPDB pathways by raw p-value for each timepoint,
+split into upregulated and downregulated metabolite subsets.
+
+```{r}
+#| label: direction-bar-function
+#| echo: true
+
+# Reusable bar chart of top pathways for a given timepoint's up/down contrasts
+plot_direction_bars <- function(ora_data, timepoint_label) {
+  plot_df <- ora_data |>
+    filter(str_starts(contrast, timepoint_label), str_detect(contrast, "Up|Down")) |>
+    mutate(
+      direction = if_else(str_detect(contrast, "Up"), "Up", "Down"),
+      neg_log10p = -log10(raw_p)
+    ) |>
+    group_by(direction) |>
+    slice_max(neg_log10p, n = 10) |>
+    ungroup() |>
+    mutate(pathway = fct_reorder(pathway, neg_log10p))
+
+  ggplot(plot_df, aes(x = neg_log10p, y = pathway, fill = direction)) +
+    geom_col(alpha = 0.85) +
+    geom_vline(xintercept = -log10(0.05), linetype = "dashed", color = "grey40") +
+    facet_wrap(~ direction, scales = "free_y") +
+    scale_fill_manual(values = c(Up = "#d95f02", Down = "#1b9e77"), guide = "none") +
+    labs(title = paste0("Top SMPDB Pathways \u2014 ", timepoint_label),
+         subtitle = "MetaboAnalystR ORA, dashed line = raw p = 0.05",
+         x = expression(-log[10]~"(raw p)"), y = NULL) +
+    theme_minimal(base_size = 10) +
+    theme(plot.title = element_text(face = "bold"),
+          panel.grid.minor = element_blank())
+}
+```
+
+::: {.panel-tabset}
+
+### 9 Months
+
+```{r}
+#| label: fig-direction-9m
+#| echo: true
+#| fig-width: 12
+#| fig-height: 6
+
+# Directional ORA comparison — 9-month cohort
+p_direction_9m <- plot_direction_bars(ora_all, "9m")
+p_direction_9m
+```
+
+### 15 Months
+
+```{r}
+#| label: fig-direction-15m
+#| echo: true
+#| fig-width: 12
+#| fig-height: 6
+
+# Directional ORA comparison — 15-month cohort
+p_direction_15m <- plot_direction_bars(ora_all, "15m")
+p_direction_15m
+```
+
+:::
+
+## Figure: Cross-Contrast Pathway Heatmap
+
+A summary heatmap of the pathways most enriched across any contrast, showing
+how significance shifts between timepoints and direction of change.
+
+```{r}
+#| label: fig-contrast-heatmap
+#| echo: true
+#| fig-width: 11
+#| fig-height: 8
+
+# Select top pathways by best (minimum) raw p-value across all contrasts
+top_pathways <- ora_all |>
+  group_by(pathway) |>
+  summarise(min_p = min(raw_p), .groups = "drop") |>
+  slice_min(min_p, n = 15) |>
+  pull(pathway)
+
+heatmap_data <- ora_all |>
+  filter(pathway %in% top_pathways) |>
+  mutate(
+    neg_log10p = -log10(raw_p),
+    sig_label = if_else(fdr < 0.1, "*", ""),
+    contrast = factor(contrast, levels = names(contrasts)),
+    pathway = fct_reorder(pathway, neg_log10p, .fun = max)
+  )
+
+p_contrast_heatmap <- ggplot(heatmap_data, aes(x = contrast, y = pathway, fill = neg_log10p)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = sig_label), size = 5, vjust = 0.75) +
+  scale_fill_gradient(low = "white", high = "#b2182b",
+                      name = expression(-log[10]~"(raw p)")) +
+  labs(title = "SMPDB Pathway Enrichment Across Contrasts",
+       subtitle = "Top 15 pathways by best raw p-value; * marks FDR < 0.1",
+       x = NULL, y = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(plot.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 30, hjust = 1),
+        panel.grid = element_blank())
+p_contrast_heatmap
+```
+
+## Save Outputs
+
+```{r}
+#| label: save-outputs
+#| echo: true
+
+# Save enrichment results and figures
+saveRDS(ora_all, file.path(output_dir, "ora_all_contrasts.rds"))
+
+ggsave(file.path(output_dir, "fig_direction_9m.png"),
+       p_direction_9m, width = 12, height = 6, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_direction_15m.png"),
+       p_direction_15m, width = 12, height = 6, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_contrast_heatmap.png"),
+       p_contrast_heatmap, width = 11, height = 8, dpi = 300, bg = "white")
+
+cat("All outputs saved to:", output_dir, "\n")
+```
+
+## Session Info
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+#| label: session-info
+#| echo: false
+sessionInfo()
+```
+:::
+
+```{r}
+#| label: purl
+#| echo: false
+#| eval: false
+
+# Uncomment to extract R code from this document
+# knitr::purl(here("04_metaboanalystr_enrichment.qmd"),
+#             output = here("04_metaboanalystr_enrichment.R"))
+```

@@ -1,0 +1,740 @@
+Super Pathway;Sub Pathway;Biochemical Name;Comp ID;KEGG;HMDB;PubChem;FC;Mutant 6 Months / WT 6 Months;
+;;;;;;;6 Months;p-value;q-value
+Amino Acid;Glycine, Serine and Threonine Metabolism;glycine;58;C00037;HMDB00123;750;0.87;0.0993;0.3151
+;;N-acetylglycine;27710;;HMDB00532;10972;0.81;0.0476;0.2629
+;;sarcosine;1516;C00213;HMDB00271;1088;0.98;0.6756;0.5705
+;;dimethylglycine;5086;C01026;HMDB00092;673;0.95;0.9314;0.6423
+;;betaine;3141;C00719;HMDB00043;247;1.09;0.5035;0.5078
+;;betaine aldehyde;15499;C00576;HMDB01252;249;1.18;0.0900;0.3147
+;;serine;1648;C00065;HMDB00187;5951;0.84;0.0829;0.3064
+;;N-acetylserine;37076;;HMDB02931;65249;0.91;0.1929;0.3523
+;;threonine;1284;C00188;HMDB00167;6288;0.88;0.2425;0.3796
+;;N-acetylthreonine;33939;;HMDB62557;152204;0.85;0.0766;0.2989
+;Alanine and Aspartate Metabolism;alanine;1126;C00041;HMDB00161;5950;0.84;0.0794;0.3025
+;;N-acetylalanine;1585;C02847;HMDB00766;88064;0.83;0.1674;0.3372
+;;N,N-dimethylalanine;63151;;;5488191;1.55;0.0191;0.2121
+;;aspartate;443;C00049;HMDB00191;5960;0.84;0.0871;0.3145
+;;N-acetylaspartate (NAA);22185;C01042;HMDB00812;65065;0.63;0.0022;0.0817
+;;asparagine;512;C00152;HMDB00168;6267;0.88;0.1725;0.3413
+;;N-acetylasparagine;33942;;HMDB06028;99715;0.89;0.2507;0.3796
+;Glutamate Metabolism;glutamate;57;C00025;HMDB00148;611;0.74;0.0389;0.2562
+;;glutamine;53;C00064;HMDB00641;5961;1.29;0.0375;0.2562
+;;N-acetylglutamate;15720;C00624;HMDB01138;70914;1.00;0.8837;0.6338
+;;N-acetylglutamine;33943;C02716;HMDB06029;182230;0.72;0.0611;0.2734
+;;4-hydroxyglutamate;40499;C03079;HMDB01344;439902;1.21;0.5107;0.5118
+;;gamma-carboxyglutamate;38754;;HMDB41900;40772;0.87;0.0525;0.2725
+;;glutamate, gamma-methyl ester;33487;;HMDB61715;68662;1.02;0.8177;0.6147
+;;pyroglutamine*;46225;;;134508;1.14;0.2598;0.3796
+;;carboxyethyl-GABA;40007;;HMDB02201;2572;0.48;0.0000;0.0057
+;;N-methyl-GABA;39577;C15987;;70703;1.12;0.2293;0.3796
+;;S-1-pyrroline-5-carboxylate;42370;C04322;HMDB01301;1196;0.68;0.0221;0.2162
+;Histidine Metabolism;histidine;59;C00135;HMDB00177;6274;0.84;0.1642;0.3372
+;;1-methylhistidine;30460;C01152;HMDB00001;92105;2.49;0.0035;0.1059
+;;3-methylhistidine;15677;C01152;HMDB00479;64969;0.88;0.2537;0.3796
+;;N-acetylhistidine;33946;C02997;HMDB32055;75619;0.73;0.0054;0.1246
+;;N-acetyl-3-methylhistidine*;43256;;;193270;0.49;0.0022;0.0817
+;;imidazole propionate;40730;;HMDB02271;70630;1.26;0.2571;0.3796
+;;formiminoglutamate;43493;C00439;HMDB00854;439233;0.76;0.2518;0.3796
+;;imidazole lactate;15716;C05568;HMDB02320;793;0.93;0.5661;0.5393
+;;carnosine;1768;C00386;HMDB00033;439224;0.76;0.4315;0.4787
+;;anserine;15747;C01262;HMDB00194;112072;0.87;0.7035;0.5788
+;;1-methylhistamine;43831;C05127;HMDB00898;3614;1.24;0.7012;0.5788
+;;1-methyl-4-imidazoleacetate;32350;C05828;HMDB02820;75810;0.88;0.1571;0.3372
+;;1-methyl-5-imidazoleacetate;62946;;HMDB04988;6451814;0.94;0.7936;0.6097
+;;1-ribosyl-imidazoleacetate*;61868;C05131;HMDB02331;5117448;0.74;0.4593;0.4952
+;;4-imidazoleacetate;32349;C02835;HMDB02024;96215;0.93;0.8031;0.6101
+;Lysine Metabolism;lysine;1301;C00047;HMDB00182;5962;0.84;0.0082;0.1483
+;;N2-acetyllysine;36751;C12989;HMDB00446;92907;1.37;0.1072;0.3151
+;;N6-acetyllysine;36752;C02727;HMDB00206;92832;0.71;0.0127;0.1877
+;;N6-methyllysine;62860;C02728;HMDB02038;164795;0.97;0.7749;0.6061
+;;N6,N6-dimethyllysine;62862;C05545;HMDB13287;193344;0.85;0.2674;0.3850
+;;N6,N6,N6-trimethyllysine;1498;C03793;HMDB01325;440120;0.94;0.4688;0.4996
+;;5-hydroxylysine;15685;C16741;HMDB00450;1029;1.14;0.4383;0.4840
+;;5-(galactosylhydroxy)-L-lysine;43582;;;123986;0.87;0.0553;0.2734
+;;fructosyllysine;46227;;;123708;0.87;0.1380;0.3269
+;;saccharopine;1495;C00449;HMDB00279;160556;0.66;0.1099;0.3193
+;;2-aminoadipate;6146;C00956;HMDB00510;469;1.92;0.5246;0.5183
+;;glutarylcarnitine (C5-DC);44664;;HMDB13130;71464488;0.68;0.0479;0.2629
+;;pipecolate;1444;C00408;HMDB00070;849;1.09;0.4940;0.5038
+;;cadaverine;15308;C01672;HMDB02322;273;1.73;0.0702;0.2936
+;;5-aminovalerate;18319;C00431;HMDB03355;138;1.74;0.0015;0.0817
+;;N,N,N-trimethyl-5-aminovalerate;57687;;;14274897;1.33;0.0154;0.2121
+;Phenylalanine Metabolism;phenylalanine;64;C00079;HMDB00159;6140;0.86;0.0842;0.3088
+;;N-acetylphenylalanine;33950;C03519;HMDB00512;74839;0.98;0.8741;0.6330
+;;1-carboxyethylphenylalanine;62566;;;;0.65;0.0732;0.2976
+;;phenylpyruvate;566;C00166;HMDB00205;997;0.92;0.4938;0.5038
+;;phenethylamine;12142;C05332;HMDB02017;1001;0.95;0.6830;0.5735
+;Tyrosine Metabolism;tyrosine;1299;C00082;HMDB00158;6057;0.82;0.0940;0.3147
+;;1-carboxyethyltyrosine;62564;;;;0.61;0.0240;0.2301
+;;4-hydroxyphenylpyruvate;1669;C01179;HMDB00707;979;0.95;0.4995;0.5053
+;;3-(4-hydroxyphenyl)lactate;32197;C03672;HMDB00755;9378;0.55;0.0022;0.0817
+;;phenol sulfate;32553;C02180;HMDB60015;74426;1.16;0.5475;0.5281
+;;phenol glucuronide;52747;;HMDB60014;87235;0.99;0.9195;0.6423
+;;p-cresol glucuronide*;48841;;HMDB11686;154035;0.92;0.7135;0.5823
+;;N-formylphenylalanine;48433;;;759256;0.94;0.4929;0.5038
+;Tryptophan Metabolism;tryptophan;54;C00078;HMDB00929;6305;0.83;0.0634;0.2776
+;;C-glycosyltryptophan;48782;;;10981970;0.88;0.1334;0.3269
+;;kynurenine;15140;C00328;HMDB00684;161166;1.09;0.5538;0.5310
+;;kynurenate;1417;C01717;HMDB00715;3845;1.03;0.7428;0.5955
+;;anthranilate;4970;C00108;HMDB01123;227;0.99;0.8299;0.6184
+;;picolinate;1512;C10164;HMDB02243;1018;1.46;0.0384;0.2562
+;;5-hydroxyindoleacetate;437;C05635;HMDB00763;1826;0.97;0.7385;0.5955
+;;indolelactate;18349;C02043;HMDB00671;92904;0.79;0.2134;0.3655
+;;3-indoxyl sulfate;27672;;HMDB00682;10258;0.57;0.0191;0.2121
+;Leucine, Isoleucine and Valine Metabolism;leucine;60;;;6106;0.89;0.1675;0.3372
+;;N-acetylleucine;1587;C02710;HMDB11756;70912;0.93;0.7279;0.5882
+;;1-carboxyethylleucine;62559;;;;0.68;0.0883;0.3145
+;;4-methyl-2-oxopentanoate;22116;C00233;HMDB00695;70;0.69;0.5170;0.5139
+;;isovalerylglycine;35107;;HMDB00678;546304;1.39;0.0270;0.2308
+;;isovalerylcarnitine (C5);34407;;HMDB00688;6426851;1.39;0.2958;0.3982
+;;3-methylcrotonylglycine;31940;;HMDB00459;169485;1.12;0.6694;0.5684
+;;beta-hydroxyisovalerate;12129;;HMDB00754;69362;1.06;0.4916;0.5038
+;;3-methylglutaconate;57747;;HMDB00522;1551553;1.17;0.1538;0.3372
+;;isoleucine;1125;C00407;HMDB00172;6306;0.92;0.2368;0.3796
+;;N-acetylisoleucine;33967;;HMDB61684;306109;0.90;0.8186;0.6147
+;;1-carboxyethylisoleucine;62558;;;;0.71;0.0933;0.3147
+;;3-methyl-2-oxovalerate;15676;C00671;HMDB03736;47;1.09;0.4748;0.5038
+;;2-methylbutyrylcarnitine (C5);45095;;HMDB00378;6426901;1.16;0.6412;0.5592
+;;2-methylbutyrylglycine;31928;;HMDB00339;193872;1.20;0.1489;0.3372
+;;tiglylcarnitine (C5:1-DC);35428;;HMDB02366;22833596;1.21;0.3413;0.4164
+;;tigloylglycine;1598;;HMDB00959;6441567;0.68;0.0264;0.2308
+;;ethylmalonate;15765;;HMDB00622;11756;0.90;0.4929;0.5038
+;;methylsuccinate;15745;;HMDB01844;10349;0.96;0.8388;0.6213
+;;valine;1649;C00183;HMDB00883;6287;0.93;0.3412;0.4164
+;;N-acetylvaline;1591;;HMDB11757;66789;0.81;0.0603;0.2734
+;;1-carboxyethylvaline;62562;;;;0.71;0.1097;0.3193
+;;alpha-hydroxyisovalerate;46537;;HMDB00407;99823;1.43;0.0744;0.2989
+;;isobutyrylcarnitine (C4);33441;;HMDB00736;168379;1.20;0.1604;0.3372
+;;3-hydroxyisobutyrate;1549;C06001;HMDB00336;87;1.01;0.4897;0.5038
+;Methionine, Cysteine, SAM and Taurine Metabolism;methionine;1302;C00073;HMDB00696;6137;0.89;0.1455;0.3364
+;;N-acetylmethionine;1589;C02712;HMDB11745;448580;0.97;0.8603;0.6278
+;;N-formylmethionine;2829;C03145;HMDB01015;439750;1.01;0.9716;0.6523
+;;S-methylmethionine;38127;C05319;HMDB38670;458;0.97;0.9435;0.6423
+;;methionine sulfone;44878;;;69961;1.40;0.0980;0.3151
+;;methionine sulfoxide;18374;C02989;HMDB02005;158980;0.85;0.2517;0.3796
+;;S-adenosylmethionine (SAM);15915;C00019;HMDB01185;34756;1.12;0.2966;0.3982
+;;S-adenosylhomocysteine (SAH);42382;C00021;HMDB00939;439155;0.84;0.1664;0.3372
+;;homocysteine;15128;C00155;HMDB00742;778;0.49;0.0409;0.2592
+;;cystathionine;15705;C02291;HMDB00099;439258;0.63;0.0375;0.2562
+;;cysteine;1868;C00097;HMDB00574;5862;0.52;0.1054;0.3151
+;;S-methylcysteine;39592;;HMDB02108;24417;1.07;0.4897;0.5038
+;;cysteine s-sulfate;22176;C05824;HMDB00731;115015;0.87;0.6010;0.5564
+;;cystine;56;C00491;HMDB00192;67678;0.67;0.1685;0.3372
+;;hypotaurine;590;C00519;HMDB00965;107812;1.38;0.0483;0.2629
+;;taurine;2125;C00245;HMDB00251;1123;0.72;0.1300;0.3269
+;;N-acetyltaurine;48187;;;159864;0.79;0.2466;0.3796
+;;succinoyltaurine;63678;;;;1.07;0.8715;0.6330
+;;taurocyamine;35117;C01959;HMDB03584;68340;0.80;0.0748;0.2989
+;"Urea cycle; Arginine and Proline Metabolism";arginine;1638;C00062;HMDB00517;232;0.83;0.3289;0.4144
+;;urea;1670;C00086;HMDB00294;1176;0.99;0.9406;0.6423
+;;ornithine;1493;C00077;HMDB03374;6262;0.86;0.0540;0.2734
+;;3-amino-2-piperidone;62853;;HMDB00323;5200225;0.94;0.7772;0.6061
+;;2-oxoarginine*;55072;C03771;HMDB04225;558;0.81;0.2096;0.3636
+;;citrulline;2132;C00327;HMDB00904;9750;0.98;0.8317;0.6188
+;;homocitrulline;22138;C02427;HMDB00679;65072;0.64;0.0964;0.3151
+;;proline;1898;C00148;HMDB00162;145742;0.86;0.1372;0.3269
+;;dimethylarginine (SDMA + ADMA);36808;C03626;HMDB01539;123831;0.89;0.3008;0.4011
+;;N-acetylcitrulline;48434;C15532;HMDB00856;656979;1.07;0.8691;0.6322
+;;N-delta-acetylornithine;43249;;;9920500;1.53;0.0020;0.0817
+;;N-alpha-acetylornithine;32984;C00437;HMDB03357;439232;0.96;0.9663;0.6500
+;;trans-4-hydroxyproline;32306;C01157;HMDB00725;5810;1.03;0.9360;0.6423
+;;pro-hydroxy-pro;35127;;HMDB06695;11673055;0.57;0.1872;0.3474
+;;N-methylproline;37431;;;557;1.09;0.6722;0.5696
+;;N,N,N-trimethyl-alanylproline betaine (TMAP);62947;;;;1.25;0.4194;0.4718
+;;N-monomethylarginine;43586;C03884;HMDB29416;132862;0.83;0.0710;0.2936
+;;argininate*;57461;;HMDB03148;160437;0.97;0.7712;0.6048
+;Creatine Metabolism;guanidinoacetate;43802;C00581;HMDB00128;763;0.86;0.2097;0.3636
+;;creatine;27718;C00300;HMDB00064;586;1.03;0.6624;0.5672
+;;creatinine;513;C00791;HMDB00562;588;1.17;0.5593;0.5352
+;Polyamine Metabolism;putrescine;1408;C00134;HMDB01414;1045;1.49;0.4947;0.5038
+;;N-acetyl-isoputreanine;62309;;;131802901;0.59;0.0211;0.2162
+;;spermidine;485;C00315;HMDB01257;1102;0.79;0.2472;0.3796
+;;(N(1) + N(8))-acetylspermidine;57814;;;"123689;496";0.61;0.0005;0.0498
+;;spermine;603;C00750;HMDB01256;1103;0.75;0.2398;0.3796
+;;5-methylthioadenosine (MTA);1419;C00170;HMDB01173;439176;1.26;0.4674;0.4992
+;Guanidino and Acetamido Metabolism;4-guanidinobutanoate;15681;C01035;HMDB03464;500;1.58;0.1357;0.3269
+;;guanidinosuccinate;32446;C03139;HMDB03157;97856;0.67;0.0491;0.2629
+;Glutathione Metabolism;glutathione, reduced (GSH);2127;C00051;HMDB00125;124886;0.45;0.1809;0.3456
+;;glutathione, oxidized (GSSG);27727;C00127;HMDB03337;65359;0.86;0.1044;0.3151
+;;cysteine-glutathione disulfide;35159;;HMDB00656;4247235;0.75;0.0951;0.3147
+;;S-methylglutathione;33944;C11347;;3605667;0.92;0.4252;0.4749
+;;5-oxoproline;1494;C01879;HMDB00267;7405;1.15;0.1001;0.3151
+;;2-hydroxybutyrate/2-hydroxyisobutyrate;52281;;;"440864;11671";1.12;0.3810;0.4459
+;;ophthalmate;34592;;HMDB05765;7018721;1.80;0.0265;0.2308
+;;S-(1,2-dicarboxyethyl)glutathione;63009;;;9802383;0.75;0.1335;0.3269
+;;4-hydroxy-nonenal-glutathione;48487;;;;1.18;0.6099;0.5564
+;;3'-dephospho-CoA-glutathione*;62807;;;;0.98;0.9049;0.6401
+;;CoA-glutathione*;62804;C00920;;11953788;1.05;0.5526;0.5309
+Peptide;Gamma-glutamyl Amino Acid;gamma-glutamylglutamate;36738;C05282;HMDB11737;92865;0.85;0.0559;0.2734
+;;gamma-glutamylglutamine;2730;C05283;HMDB11738;150914;1.56;0.0482;0.2629
+;;gamma-glutamylglycine;33949;;HMDB11667;165527;1.05;0.6940;0.5786
+;;gamma-glutamylisoleucine*;34456;;HMDB11170;14253342;1.26;0.1184;0.3225
+;;gamma-glutamylleucine;18369;;HMDB11171;151023;1.27;0.0423;0.2614
+;;gamma-glutamyl-epsilon-lysine;33934;;HMDB03869;7015685;0.84;0.0954;0.3147
+;;gamma-glutamylphenylalanine;33422;;HMDB00594;111299;1.35;0.0603;0.2734
+;;gamma-glutamylthreonine;33364;;HMDB29159;76078708;1.35;0.2970;0.3982
+;;gamma-glutamylvaline;43829;;HMDB11172;7015683;1.61;0.0007;0.0598
+;Dipeptide;glycylleucine;34398;C02155;HMDB00759;92843;0.77;0.3632;0.4334
+;;glycylvaline;18357;;HMDB28854;97417;0.78;0.1748;0.3423
+;;isoleucylglycine;40008;;HMDB28907;342532;0.89;0.4087;0.4654
+;;phenylalanylalanine;41374;;;5488196;0.92;0.8773;0.6338
+;;phenylalanylglycine;41370;;HMDB28995;98207;0.85;0.6123;0.5565
+;;prolylglycine;40703;;HMDB11178;6426709;0.81;0.1070;0.3151
+;;tyrosylglycine;41375;;HMDB29105;259323;0.98;0.6376;0.5592
+;;valylglycine;40475;;HMDB29127;136487;0.84;0.5701;0.5393
+;;valylleucine;39994;;HMDB29131;352039;0.96;0.4244;0.4749
+;Acetylated Peptides;phenylacetylglycine;33945;C05598;HMDB00821;68144;1.25;0.3568;0.4283
+Carbohydrate;Glycolysis, Gluconeogenesis, and Pyruvate Metabolism;1,5-anhydroglucitol (1,5-AG);20675;C07326;HMDB02712;64960;0.87;0.3361;0.4163
+;;glucose;48152;C00031;HMDB00122;5793;0.72;0.1196;0.3225
+;;glucose 6-phosphate;31260;C00668;HMDB01401;5958;0.90;0.2434;0.3796
+;;fructose 1,6-diphosphate/glucose 1,6-diphosphate/myo-inositol diphosphates;46896;C00354;;;0.76;0.1734;0.3413
+;;2,3-diphosphoglycerate;15664;C01159;HMDB01294;186004;1.18;0.6449;0.5611
+;;dihydroxyacetone phosphate (DHAP);15522;C00111;HMDB01473;668;0.61;0.1179;0.3225
+;;3-phosphoglycerate;1414;C00597;HMDB00807;724;1.03;0.7496;0.5959
+;;phosphoenolpyruvate (PEP);597;C00074;HMDB00263;1005;1.00;0.9805;0.6551
+;;pyruvate;48990;C00022;HMDB00243;1060;0.96;0.8130;0.6124
+;;lactate;527;C00186;HMDB00190;612;0.77;0.1015;0.3151
+;;glycerate;1572;C00258;HMDB00139;752;0.94;0.3685;0.4366
+;Pentose Phosphate Pathway;6-phosphogluconate;15442;C00345;HMDB01316;91493;0.75;0.0716;0.2936
+;;5-phosphoribosyl diphosphate (PRPP);36840;C00119;HMDB00280;7339;0.82;0.4908;0.5038
+;;ribose 1-phosphate;1763;C00620;HMDB01489;439236;0.68;0.1030;0.3151
+;;sedoheptulose-7-phosphate;35649;C05382;HMDB01068;616;1.01;0.8053;0.6101
+;;erythrose 4-phosphate;15830;C00279;HMDB01321;122357;0.94;0.9278;0.6423
+;Pentose Metabolism;ribose;1471;C00121;HMDB00283;5779;0.81;0.1507;0.3372
+;;ribitol;15772;C00474;HMDB00508;6912;1.01;0.9063;0.6401
+;;ribonate;27731;C01685;HMDB00867;5460677;0.76;0.1615;0.3372
+;;ribulose/xylulose;54671;;;"151261;5289590";0.76;0.0641;0.2776
+;;arabitol/xylitol;48885;;;"6912;94154";1.03;0.8928;0.6359
+;;arabonate/xylonate;48255;;;"122045;6602431";1.03;0.7419;0.5955
+;;sedoheptulose;53237;;HMDB03219;5459879;0.84;0.2800;0.3906
+;;ribulonate/xylulonate/lyxonate*;61858;;;;1.02;0.8964;0.6365
+;Glycogen Metabolism;maltohexaose;35170;C01936;HMDB12253;439606;1.45;0.9655;0.6500
+;;maltopentaose;35163;C06218;HMDB12254;13489094;1.08;0.8256;0.6171
+;;maltotetraose;15910;C02052;HMDB01296;446495;0.51;0.0574;0.2734
+;;maltotriose;44688;C01835;HMDB01262;439586;2.74;0.6947;0.5786
+;;maltose;15586;C00208;HMDB00163;10991489;1.10;0.2472;0.3796
+;Disaccharides and Oligosaccharides;sucrose;1519;C00089;HMDB00258;5988;1.36;0.7461;0.5955
+;Fructose, Mannose and Galactose Metabolism;fructose;48195;C00095;HMDB00660;5984;0.89;0.3285;0.4144
+;;mannitol/sorbitol;46142;C00794;HMDB00247;5780;0.77;0.2305;0.3796
+;;mannose;584;C00159;HMDB00169;18950;0.88;0.3254;0.4144
+;;galactose 1-phosphate;15706;C00446;HMDB00645;123912;0.91;0.2492;0.3796
+;;2-ketogulonate;15306;C15673;HMDB11732;50;1.31;0.1540;0.3372
+;;galactonate;27719;C00880;HMDB00565;128869;0.96;0.7601;0.6023
+;Nucleotide Sugar;UDP-glucose/UDP-galactose;38670;C00029;HMDB00286;;0.97;0.6246;0.5585
+;;UDP-N-acetylglucosamine/galactosamine;46148;;;;1.46;0.1192;0.3225
+;Aminosugar Metabolism;glucosamine-6-phosphate;580;C00352;HMDB01254;439217;1.01;0.9281;0.6423
+;;glucuronate;15443;C00191;HMDB00127;444791;0.91;0.4015;0.4591
+;;N-acetylglucosamine 6-phosphate;15107;C00357;HMDB02817;439219;1.57;0.1344;0.3269
+;;N-acetyl-glucosamine 1-phosphate;15741;C04256;HMDB01367;440364;1.08;0.6674;0.5684
+;;N-acetylneuraminate;32377;C00270;HMDB00230;439197;0.94;0.3382;0.4164
+;;N-acetylglucosaminylasparagine;48149;C04540;HMDB00489;123826;0.94;0.6216;0.5585
+;;erythronate*;42420;;HMDB00613;2781043;0.91;0.4763;0.5038
+;;N-acetylglucosamine/N-acetylgalactosamine;46539;;HMDB00215;24139;0.85;0.1685;0.3372
+;;N-glycolylneuraminate;37123;C03410;HMDB00833;123802;0.94;0.3406;0.4164
+;Advanced Glycation End-product;N6-carboxymethyllysine;36713;;;123800;1.22;0.1826;0.3456
+Energy;TCA Cycle;citrate;1564;C00158;HMDB00094;311;1.01;0.8864;0.6338
+;;aconitate [cis or trans];46173;;;;0.83;0.3205;0.4127
+;;alpha-ketoglutarate;528;C00026;HMDB00208;51;0.64;0.0096;0.1624
+;;succinylcarnitine (C4-DC);37058;;HMDB61717;71464481;0.75;0.2156;0.3668
+;;succinate;1437;C00042;HMDB00254;1110;0.84;0.2073;0.3636
+;;fumarate;1643;C00122;HMDB00134;444972;0.80;0.0112;0.1764
+;;malate;1303;C00149;HMDB00156;525;0.84;0.0093;0.1615
+;;itaconate;18373;C00490;HMDB02092;811;1.23;0.4804;0.5038
+;;tricarballylate;15729;C19806;HMDB31193;14925;0.84;0.5170;0.5139
+;;2-methylcitrate/homocitrate;52282;;;"515;439459";0.97;0.6528;0.5649
+;Oxidative Phosphorylation;acetylphosphate;15488;C00227;HMDB01494;186;0.89;0.2164;0.3668
+;;phosphate;42109;C00009;HMDB01429;1061;0.98;0.4555;0.4941
+Lipid;Fatty Acid Synthesis;malonylcarnitine;37059;;HMDB02095;22833583;0.91;0.3351;0.4162
+;Short Chain Fatty Acid;butyrate/isobutyrate (4:0);40605;C00246;HMDB00039;264;0.94;0.6696;0.5684
+;Medium Chain Fatty Acid;caproate (6:0);32489;C01585;HMDB00535;8892;1.27;0.0761;0.2989
+;;heptanoate (7:0);1644;C17714;HMDB00666;8094;1.00;0.9669;0.6500
+;;caprylate (8:0);32492;C06423;HMDB00482;379;0.96;0.4457;0.4871
+;;caprate (10:0);1642;C01571;HMDB00511;2969;1.04;0.6134;0.5565
+;;laurate (12:0);1645;C02679;HMDB00638;3893;1.14;0.2096;0.3636
+;;5-dodecenoate (12:1n7);33968;;HMDB00529;5312378;1.11;0.6218;0.5585
+;Long Chain Saturated Fatty Acid;myristate (14:0);1365;C06424;HMDB00806;11005;1.02;0.8463;0.6236
+;;pentadecanoate (15:0);1361;C16537;HMDB00826;13849;1.04;0.3098;0.4098
+;;palmitate (16:0);1336;C00249;HMDB00220;985;0.97;0.6111;0.5564
+;;margarate (17:0);1121;;HMDB02259;10465;0.96;0.6648;0.5683
+;;stearate (18:0);1358;C01530;HMDB00827;5281;0.98;0.6879;0.5749
+;;nonadecanoate (19:0);1356;C16535;HMDB00772;12591;0.95;0.5131;0.5132
+;;arachidate (20:0);1118;C06425;HMDB02212;10467;0.98;0.6415;0.5592
+;;behenate (22:0)*;12125;C08281;HMDB00944;8215;1.04;0.5971;0.5541
+;Long Chain Monounsaturated Fatty Acid;myristoleate (14:1n5);32418;C08322;HMDB02000;5281119;1.18;0.4796;0.5038
+;;palmitoleate (16:1n7);33447;C08362;HMDB03229;445638;0.98;0.9318;0.6423
+;;10-heptadecenoate (17:1n7);33971;;HMDB60038;5312435;0.95;0.7460;0.5955
+;;oleate/vaccenate (18:1);52285;;;"445639;5282761;5281127";0.91;0.2255;0.3782
+;;10-nonadecenoate (19:1n9);33972;;HMDB13622;5312513;0.90;0.3240;0.4144
+;;eicosenoate (20:1);33587;C16526;HMDB02231;5282768;0.91;0.3303;0.4144
+;;erucate (22:1n9);1552;C08316;HMDB02068;5281116;0.85;0.0608;0.2734
+;;nervonate (24:1n9)*;52674;C08323;HMDB02368;5281120;1.10;0.6225;0.5585
+;Long Chain Polyunsaturated Fatty Acid (n3 and n6);tetradecadienoate (14:2)*;62850;;HMDB00560;5312409;1.27;0.1950;0.3539
+;;hexadecatrienoate (16:3n3);57651;;;5312428;1.07;0.8023;0.6101
+;;heptadecatrienoate (17:3)*;62383;C16344;;16061034;0.80;0.4119;0.4676
+;;stearidonate (18:4n3);33969;C16300;HMDB06547;5312508;0.85;0.3160;0.4127
+;;"eicosapentaenoate (EPA; 20:5n3)";18467;C06428;HMDB01999;446284;0.74;0.1887;0.3476
+;;heneicosapentaenoate (21:5n3);57658;;;11998573;0.71;0.1369;0.3269
+;;"docosapentaenoate (n3 DPA; 22:5n3)";32504;C16513;HMDB06528;6441454;0.79;0.1678;0.3372
+;;"docosahexaenoate (DHA; 22:6n3)";44675;C06429;HMDB02183;445580;0.82;0.0410;0.2592
+;;docosatrienoate (22:3n3);32417;C16534;HMDB02823;5312556;0.94;0.5888;0.5495
+;;nisinate (24:6n3);57810;;HMDB02007;11792612;0.75;0.0414;0.2592
+;;hexadecadienoate (16:2n6);57652;;HMDB00477;13932172;1.12;0.6735;0.5697
+;;linoleate (18:2n6);1105;C01595;HMDB00673;5280450;0.95;0.5929;0.5517
+;;"linolenate [alpha or gamma; (18:3n3 or 6)]";34035;C06426;HMDB03073;5280934;0.94;0.7995;0.6101
+;;dihomo-linoleate (20:2n6);17805;C16525;HMDB05060;6439848;0.98;0.8854;0.6338
+;;dihomo-linolenate (20:3n3 or n6);35718;C03242;HMDB02925;5280581;0.90;0.2793;0.3906
+;;arachidonate (20:4n6);1110;C00219;HMDB01043;444899;0.91;0.2264;0.3784
+;;docosatrienoate (22:3n6)*;57467;;;;0.79;0.0319;0.2496
+;;adrenate (22:4n6);32980;C16527;HMDB02226;5497181;0.82;0.0393;0.2562
+;;"docosapentaenoate (n6 DPA; 22:5n6)";37478;C16513;HMDB01976;6441454;0.65;0.0021;0.0817
+;;docosadienoate (22:2n6);32415;C16533;HMDB61714;5282807;0.84;0.0606;0.2734
+;;mead acid (20:3n9);35174;;HMDB10378;5312531;0.79;0.0386;0.2562
+;Fatty Acid, Branched;(14 or 15)-methylpalmitate (a17:0 or i17:0);38768;;;17903417;0.96;0.5001;0.5053
+;;(16 or 17)-methylstearate (a19:0 or i19:0);38296;;HMDB37397;3083779;0.96;0.7630;0.6023
+;Fatty Acid, Dicarboxylate;glutarate (C5-DC);396;C00489;HMDB00661;743;1.44;0.1782;0.3451
+;;3-methylglutarate/2-methylglutarate;54676;;HMDB00752;;0.79;0.1339;0.3269
+;;2-hydroxyglutarate;37253;C02630;HMDB0059655;43;1.06;0.8098;0.6109
+;;adipate (C6-DC);21134;C06104;HMDB00448;196;1.26;0.4481;0.4871
+;;2-hydroxyadipate;31934;C02360;HMDB00321;193530;1.79;0.7990;0.6101
+;;3-hydroxyadipate*;62069;;HMDB00345;151913;1.07;0.9662;0.6500
+;;3-methyladipate;36749;;HMDB00555;12292;0.97;0.2101;0.3636
+;;maleate;20676;C01384;HMDB00176;444266;1.02;0.6581;0.5665
+;;pimelate (C7-DC);15704;C02656;HMDB00857;385;1.34;0.0541;0.2734
+;;heptenedioate (C7:1-DC)*;61866;;;;1.05;0.8595;0.6278
+;;suberate (C8-DC);15730;C08278;HMDB00893;10457;1.26;0.1685;0.3372
+;;azelate (C9-DC);18362;C08261;HMDB00784;2266;1.25;0.0763;0.2989
+;;sebacate (C10-DC);32398;C08277;HMDB00792;5192;1.26;0.1817;0.3456
+;;3-hydroxydodecanedioate*;62915;;HMDB00413;16663321;1.08;0.3931;0.4547
+;;dodecadienoate (12:2)*;62276;;;;0.99;0.5693;0.5393
+;;tetradecanedioate (C14-DC);35669;;HMDB00872;13185;1.17;0.3448;0.4177
+;;hexadecanedioate (C16-DC);35678;C19615;HMDB00672;10459;1.03;0.7185;0.5845
+;;hexadecenedioate (C16:1-DC)*;61862;;;;1.08;0.4975;0.5048
+;;2-hydroxysebacate;63357;;HMDB00424;128458;1.26;0.1012;0.3151
+;Fatty Acid, Amino;2-aminoheptanoate;43761;;;227939;1.62;0.0180;0.2121
+;Fatty Acid Metabolism (also BCAA Metabolism);butyrylglycine;31850;;HMDB00808;88412;0.73;0.0495;0.2629
+;;propionylcarnitine (C3);32452;C03017;HMDB00824;107738;1.22;0.5061;0.5083
+;;propionylglycine;31932;;HMDB00783;98681;0.94;0.8829;0.6338
+;;methylmalonate (MMA);1496;C02170;HMDB00202;487;0.86;0.2411;0.3796
+;Fatty Acid Metabolism (Acyl Glycine);isocaproylglycine;61789;;;28777652;1.07;0.4458;0.4871
+;;valerylglycine;36768;;HMDB00927;4737557;0.80;0.0806;0.3025
+;;hexanoylglycine;35436;;HMDB00701;99463;0.93;0.6286;0.5585
+;;4-methylhexanoylglycine;62736;;;;0.91;0.9388;0.6423
+;;N-octanoylglycine;43502;;HMDB00832;84290;1.01;0.9496;0.6437
+;;N-palmitoylglycine;42092;;HMDB13034;151008;0.91;0.5416;0.5247
+;;N-linoleoylglycine;32462;;;6433346;0.77;0.2588;0.3796
+;;2-butenoylglycine;61785;;;6303498;1.02;0.9361;0.6423
+;;3-hydroxybutyroylglycine**;62064;;;;0.93;0.5716;0.5396
+;Fatty Acid Metabolism (Acyl Carnitine, Short Chain);acetylcarnitine (C2);32198;C02571;HMDB00201;1;1.30;0.4406;0.4854
+;Fatty Acid Metabolism (Acyl Carnitine, Long Chain Saturated);palmitoylcarnitine (C16);44681;C02990;HMDB00222;461;0.99;0.7943;0.6097
+;;margaroylcarnitine (C17)*;57512;;HMDB06210;;1.18;0.4425;0.4864
+;;stearoylcarnitine (C18);34409;;HMDB00848;6426855;0.93;0.5210;0.5169
+;;arachidoylcarnitine (C20)*;57513;;HMDB06460;;0.70;0.0851;0.3099
+;Fatty Acid Metabolism (Acyl Carnitine, Monounsaturated);oleoylcarnitine (C18:1);35160;;HMDB05065;6441392;1.08;0.7639;0.6023
+;Fatty Acid Metabolism (Acyl Carnitine, Polyunsaturated);linoleoylcarnitine (C18:2)*;46223;;HMDB06469;6450015;1.32;0.1725;0.3413
+;;arachidonoylcarnitine (C20:4);57518;;;;1.24;0.2536;0.3796
+;Fatty Acid Metabolism (Acyl Carnitine, Dicarboxylate);adipoylcarnitine (C6-DC);52988;;HMDB61677;71296139;1.10;0.7044;0.5788
+;;pimeloylcarnitine/3-methyladipoylcarnitine (C7-DC);53224;;;;0.76;0.2876;0.3955
+;Fatty Acid Metabolism (Acyl Carnitine, Hydroxy);(R)-3-hydroxybutyrylcarnitine;43264;;HMDB13127;53481617;0.59;0.0464;0.2629
+;;(S)-3-hydroxybutyrylcarnitine;52984;;HMDB13127;;1.06;0.7595;0.6023
+;;3-hydroxyhexanoylcarnitine (1);62557;;;;0.93;0.7720;0.6048
+;;3-hydroxydecanoylcarnitine;63358;;HMDB61636;;0.93;0.8039;0.6101
+;;3-hydroxyoleoylcarnitine;61840;;;;1.56;0.0643;0.2776
+;Carnitine Metabolism;deoxycarnitine;36747;C01181;HMDB01161;134;0.95;0.5407;0.5247
+;;carnitine;15500;C00318;HMDB00062;10917;0.85;0.0455;0.2629
+;Ketone Bodies;3-hydroxybutyrate (BHBA);542;C01089;HMDB00357;441;1.26;0.5688;0.5393
+;Fatty Acid Metabolism (Acyl Choline);oleoylcholine;53260;;;;1.17;0.2486;0.3796
+;;linoleoylcholine*;57463;;;;1.40;0.0381;0.2562
+;;stearoylcholine*;57464;;;;1.35;0.1626;0.3372
+;Fatty Acid, Monohydroxy;2-hydroxyheptanoate*;61827;;;2750949;1.02;0.9236;0.6423
+;;2-hydroxystearate;17945;C03045;;69417;0.99;0.8861;0.6338
+;;3-hydroxyhexanoate;53230;;;151492;1.39;0.0446;0.2629
+;;3-hydroxyoctanoate;22001;;HMDB01954;26613;1.37;0.0394;0.2562
+;;3-hydroxydecanoate;22053;;HMDB02203;26612;1.02;0.9994;0.6611
+;;3-hydroxytridecanoate;63858;;HMDB61655;5312749;1.16;0.2348;0.3796
+;;3-hydroxysebacate;31943;;HMDB00350;3017884;1.36;0.2059;0.3636
+;;3-hydroxylaurate;32457;;HMDB00387;94216;1.24;0.1348;0.3269
+;;3-hydroxymyristate;21158;;;16064;1.05;0.6338;0.5592
+;;5-hydroxyhexanoate;31938;;HMDB00525;170748;1.43;0.1061;0.3151
+;;8-hydroxyoctanoate;21239;;HMDB61914;69820;1.58;0.0883;0.3145
+;;16-hydroxypalmitate;39609;C18218;HMDB06294;10466;1.11;0.2495;0.3796
+;;13-HODE + 9-HODE;37752;;;43013;1.11;0.6557;0.5654
+;Fatty Acid, Dihydroxy;12,13-DiHOME;38395;C14829;HMDB04705;10236635;0.98;0.8782;0.6338
+;;9,10-DiHOME;38399;C14828;HMDB04704;9966640;0.98;0.7225;0.5868
+;;2S,3R-dihydroxybutyrate;62950;;HMDB02453;10964471;1.09;0.4585;0.4952
+;;2R,3R-dihydroxybutyrate;63109;;HMDB00498;13120901;0.78;0.0954;0.3147
+;;2,4-dihydroxybutyrate;62951;;HMDB00360;192742;0.93;0.7460;0.5955
+;;3,4-dihydroxybutyrate;62952;;;;0.85;0.2282;0.3796
+;;19,20-DiHDPA;46286;;HMDB10214;16061148;0.87;0.3676;0.4365
+;;14,15-DiHETrE;46305;C14775;HMDB02265;5283147;1.19;0.1184;0.3225
+;Fatty Acid, Oxidized;4-hydroxynonenal;38309;;HMDB04362;1693;1.09;0.6400;0.5592
+;Docosanoid;14-HDoHE/17-HDoHE;53034;;;;0.98;0.7008;0.5788
+;Eicosanoid;prostaglandin F2alpha;19398;C00639;HMDB01139;5280363;1.06;0.4630;0.4956
+;;6-keto prostaglandin F1alpha;20476;C05961;HMDB02886;5280888;1.07;0.3951;0.4556
+;;12-HEPE;46293;;HMDB10202;10041593;1.04;0.9895;0.6577
+;;12-HETE;37536;;HMDB06111;5312983;1.34;0.3606;0.4314
+;;15-HETE;37538;C04742;HMDB02110;5280724;1.02;0.9304;0.6423
+;;12-HHTrE;57393;C20388;HMDB12535;5283141;1.02;0.6770;0.5707
+;Endocannabinoid;oleoyl ethanolamide;38102;;HMDB02088;5283454;0.98;0.8972;0.6365
+;;palmitoyl ethanolamide;38165;C16512;HMDB02100;4671;0.92;0.4819;0.5038
+;;stearoyl ethanolamide;38625;;HMDB13078;27902;0.84;0.2703;0.3851
+;;arachidonoyl ethanolamide;32463;C11695;HMDB04080;5281969;1.10;0.6080;0.5564
+;;N-arachidonoyltaurine;54748;;;;0.64;0.1929;0.3523
+;;N-oleoyltaurine;39732;;;6437033;0.69;0.2691;0.3851
+;;N-stearoyltaurine;39730;;;168274;1.09;0.8471;0.6236
+;;N-palmitoyltaurine;39835;;;;0.85;0.4602;0.4952
+;;N-palmitoleoyltaurine*;61824;;;;0.76;0.2786;0.3906
+;;N-linoleoyltaurine*;61826;;;;0.69;0.0900;0.3147
+;;N-linolenoyltaurine*;46224;;;;0.74;0.2184;0.3689
+;;linoleoyl ethanolamide;52608;;HMDB12252;5283446;1.10;0.3448;0.4177
+;Inositol Metabolism;myo-inositol;1124;C00137;HMDB00211;892;0.99;0.8932;0.6359
+;;inositol 1-phosphate (I1P);43849;C01177;HMDB00213;440194;0.90;0.6194;0.5585
+;Phospholipid Metabolism;choline;15506;C00114;HMDB00097;305;1.44;0.0000;0.0028
+;;choline phosphate;34396;C00588;HMDB01565;1014;1.11;0.1473;0.3364
+;;cytidine 5'-diphosphocholine;34418;C00307;HMDB01413;13804;1.41;0.0258;0.2308
+;;glycerophosphorylcholine (GPC);15990;C00670;HMDB00086;71920;1.18;0.9961;0.6606
+;;phosphoethanolamine;1600;C00346;HMDB00224;1015;1.03;0.6798;0.5721
+;;cytidine-5'-diphosphoethanolamine;34410;C00570;HMDB01564;123727;1.28;0.7774;0.6061
+;;glycerophosphoethanolamine;37455;C01233;HMDB00114;123874;1.29;0.4016;0.4591
+;;glycerophosphoserine*;57404;;;3081457;0.95;0.6661;0.5684
+;;glycerophosphoinositol*;52307;;;167572;0.96;0.7692;0.6045
+;;trimethylamine N-oxide;40406;C01104;HMDB00925;1145;0.53;0.0808;0.3025
+;Phosphatidylcholine (PC);1-myristoyl-2-palmitoyl-GPC (14:0/16:0);19258;;HMDB07869;129657;1.11;0.0641;0.2776
+;;1-myristoyl-2-arachidonoyl-GPC (14:0/20:4)*;53195;;HMDB07883;;0.90;0.3880;0.4522
+;;1,2-dipalmitoyl-GPC (16:0/16:0);19130;;HMDB00564;452110;0.95;0.3513;0.4244
+;;1-palmitoyl-2-palmitoleoyl-GPC (16:0/16:1)*;52470;;HMDB07969;;1.17;0.0039;0.1059
+;;1-palmitoyl-2-stearoyl-GPC (16:0/18:0);52616;;HMDB07970;;0.90;0.1642;0.3372
+;;1-palmitoyl-2-oleoyl-GPC (16:0/18:1);52461;;HMDB07972;6436017;1.12;0.0076;0.1422
+;;1-palmitoyl-2-linoleoyl-GPC (16:0/18:2);42446;;HMDB07973;5287971;1.09;0.0053;0.1246
+;;1-palmitoyl-2-gamma-linolenoyl-GPC (16:0/18:3n6)*;54812;;HMDB07974;;1.03;0.8846;0.6338
+;;1-palmitoyl-2-dihomo-linolenoyl-GPC (16:0/20:3n3 or 6)*;52454;;;;1.08;0.8354;0.6197
+;;1-palmitoyl-2-arachidonoyl-GPC (16:0/20:4n6);52462;;HMDB07982;10747814;0.94;0.1337;0.3269
+;;1-palmitoyl-2-docosahexaenoyl-GPC (16:0/22:6);52610;;HMDB07991;6441886;0.98;0.7061;0.5792
+;;1-palmitoleoyl-2-linoleoyl-GPC (16:1/18:2)*;52683;;HMDB08006;;1.16;0.0585;0.2734
+;;1-palmitoleoyl-2-linolenoyl-GPC (16:1/18:3)*;53180;;HMDB08008;;1.08;0.5680;0.5393
+;;1-stearoyl-2-oleoyl-GPC (18:0/18:1);52438;;HMDB08038;;1.06;0.1768;0.3437
+;;1-stearoyl-2-linoleoyl-GPC (18:0/18:2)*;52452;;HMDB08039;;1.03;0.4182;0.4718
+;;1-stearoyl-2-arachidonoyl-GPC (18:0/20:4);42450;;HMDB08048;16219824;0.90;0.0185;0.2121
+;;1-stearoyl-2-docosahexaenoyl-GPC (18:0/22:6);52611;;HMDB08057;;0.95;0.2486;0.3796
+;;1,2-dioleoyl-GPC (18:1/18:1);52457;;;10350317;1.09;0.3140;0.4127
+;;1-oleoyl-2-linoleoyl-GPC (18:1/18:2)*;52453;;;;1.04;0.5701;0.5393
+;;1-oleoyl-2-docosahexaenoyl-GPC (18:1/22:6)*;52697;;HMDB08123;;0.86;0.0117;0.1785
+;;1,2-dilinoleoyl-GPC (18:2/18:2);52603;;HMDB08138;5288075;0.99;0.9905;0.6577
+;;1-linoleoyl-2-linolenoyl-GPC (18:2/18:3)*;53176;;HMDB08141;;0.98;0.9872;0.6577
+;;1-linoleoyl-2-arachidonoyl-GPC (18:2/20:4n6)*;52710;;HMDB08147;;0.83;0.0492;0.2629
+;Phosphatidylethanolamine (PE);1,2-dipalmitoyl-GPE (16:0/16:0)*;57341;;HMDB08923;445468;1.10;0.2951;0.3982
+;;1-palmitoyl-2-stearoyl-GPE (16:0/18:0)*;57388;;HMDB08925;5326793;1.10;0.3144;0.4127
+;;1-palmitoyl-2-oleoyl-GPE (16:0/18:1);19263;;HMDB05320;5283496;1.24;0.0218;0.2162
+;;1-palmitoyl-2-linoleoyl-GPE (16:0/18:2);42449;;HMDB05322;9546747;1.23;0.0196;0.2121
+;;1-palmitoyl-2-arachidonoyl-GPE (16:0/20:4)*;52464;;HMDB05323;9546800;0.96;0.2346;0.3796
+;;1-palmitoyl-2-docosahexaenoyl-GPE (16:0/22:6)*;52465;;HMDB05324;9546799;0.96;0.2646;0.3832
+;;1-stearoyl-2-oleoyl-GPE (18:0/18:1);42448;;HMDB08993;;1.20;0.0101;0.1646
+;;1-stearoyl-2-linoleoyl-GPE (18:0/18:2)*;52446;;HMDB08994;9546749;1.15;0.0261;0.2308
+;;1-stearoyl-2-arachidonoyl-GPE (18:0/20:4);52447;;HMDB09003;5289133;0.99;0.7010;0.5788
+;;1-stearoyl-2-docosahexaenoyl-GPE (18:0/22:6)*;52466;;HMDB05334;9546798;0.95;0.4621;0.4956
+;;1-oleoyl-2-linoleoyl-GPE (18:1/18:2)*;52687;;HMDB05349;9546753;1.19;0.0495;0.2629
+;;1-oleoyl-2-arachidonoyl-GPE (18:1/20:4)*;55041;;HMDB09069;;0.98;0.6398;0.5592
+;;1-oleoyl-2-docosahexaenoyl-GPE (18:1/22:6)*;53209;;;;0.91;0.0578;0.2734
+;;1,2-dilinoleoyl-GPE (18:2/18:2)*;53174;;HMDB09093;9546812;1.16;0.1604;0.3372
+;;1-linoleoyl-2-arachidonoyl-GPE (18:2/20:4)*;53189;;HMDB09102;;0.86;0.1650;0.3372
+;Glycosyl PE;1-palmitoyl-2-oleoyl-glycosyl-GPE (16:0/18:1)**;63200;;;;0.90;0.3197;0.4127
+;;1-palmitoyl-2-linoleoyl-glycosyl-GPE (16:0/18:2)**;63197;;;;0.80;0.1532;0.3372
+;;1-palmitoyl-2-arachidonoyl-glycosyl-GPE (16:0/20:4)**;63195;;;;0.75;0.1241;0.3263
+;;1-palmitoyl-2-docosahexaenoyl-glycosyl-GPE (16:0/22:6)**;63196;;;;0.73;0.1377;0.3269
+;;1-stearoyl-2-linoleoyl-glycosyl-GPE (18:0/18:2)**;63192;;;;0.86;0.2606;0.3796
+;;1-stearoyl-2-arachidonoyl-glycosyl-GPE (18:0/20:4)**;63193;;;;0.70;0.0806;0.3025
+;;1-stearoyl-2-docosahexaenoyl-glycosyl-GPE (18:0/22:6)**;63194;;;;0.67;0.1174;0.3225
+;Phosphatidylserine (PS);1-stearoyl-2-oleoyl-GPS (18:0/18:1);19265;;HMDB10163;9547087;1.03;0.6851;0.5735
+;;1-stearoyl-2-linoleoyl-GPS (18:0/18:2);53009;;;9547091;1.11;0.1250;0.3263
+;;1-stearoyl-2-arachidonoyl-GPS (18:0/20:4);52235;;HMDB12383;;1.00;0.9457;0.6423
+;Phosphatidylglycerol (PG);1-palmitoyl-2-oleoyl-GPG (16:0/18:1);52448;;;5283509;0.89;0.1612;0.3372
+;;1-palmitoyl-2-linoleoyl-GPG (16:0/18:2);52628;;HMDB10575;;0.76;0.0069;0.1394
+;Phosphatidylinositol (PI);1-palmitoyl-2-linoleoyl-GPI (16:0/18:2);52450;;HMDB09784;;1.11;0.3388;0.4164
+;;1-palmitoyl-2-arachidonoyl-GPI (16:0/20:4)*;52467;;HMDB09789;;0.91;0.2043;0.3636
+;;1-stearoyl-2-linoleoyl-GPI (18:0/18:2);52468;;HMDB09809;;1.37;0.0331;0.2502
+;;1-stearoyl-2-arachidonoyl-GPI (18:0/20:4);52449;;HMDB09815;;0.95;0.1934;0.3523
+;;1-oleoyl-2-arachidonoyl-GPI (18:1/20:4)*;54994;;HMDB09844;;0.81;0.0383;0.2562
+;Lysophospholipid;1-palmitoyl-GPC (16:0);33955;;HMDB10382;86554;0.92;0.3174;0.4127
+;;2-palmitoyl-GPC (16:0)*;35253;;HMDB61702;15061532;0.86;0.1217;0.3263
+;;1-palmitoleoyl-GPC (16:1)*;33230;;HMDB10383;24779461;0.96;0.6025;0.5564
+;;2-palmitoleoyl-GPC (16:1)*;35819;;HMDB10383;;0.89;0.2987;0.3994
+;;1-stearoyl-GPC (18:0);33961;;HMDB10384;497299;0.85;0.1300;0.3269
+;;1-oleoyl-GPC (18:1);48258;;HMDB02815;16081932;0.91;0.2335;0.3796
+;;1-linoleoyl-GPC (18:2);34419;C04100;HMDB10386;11988421;0.90;0.2520;0.3796
+;;1-linolenoyl-GPC (18:3)*;45951;;HMDB10388;;0.71;0.0298;0.2421
+;;1-arachidonoyl-GPC (20:4n6)*;34061;C05208;HMDB10395;;0.69;0.0057;0.1263
+;;1-lignoceroyl-GPC (24:0);49617;;HMDB10405;;1.01;0.8541;0.6259
+;;1-palmitoyl-GPE (16:0);35631;;HMDB11503;9547069;0.95;0.5055;0.5083
+;;1-stearoyl-GPE (18:0);42398;;HMDB11130;9547068;0.97;0.8068;0.6101
+;;2-stearoyl-GPE (18:0)*;41220;;HMDB11129;;0.86;0.2450;0.3796
+;;1-oleoyl-GPE (18:1);35628;;HMDB11506;9547071;0.91;0.3773;0.4427
+;;1-linoleoyl-GPE (18:2)*;36600;;HMDB11507;52925130;0.94;0.7148;0.5824
+;;1-arachidonoyl-GPE (20:4n6)*;35186;;HMDB11517;42607465;0.72;0.0039;0.1059
+;;1-palmitoyl-GPS (16:0)*;46130;;;9547100;1.04;0.7039;0.5788
+;;1-stearoyl-GPS (18:0)*;45966;;;9547101;1.00;0.9318;0.6423
+;;1-oleoyl-GPS (18:1);19260;;HMDB61694;9547099;0.77;0.1184;0.3225
+;;1-linoleoyl-GPS (18:2)*;43676;;;;1.08;0.6410;0.5592
+;;1-palmitoyl-GPG (16:0)*;45970;;;3300276;0.87;0.2552;0.3796
+;;1-stearoyl-GPG (18:0);34437;;;;0.72;0.2485;0.3796
+;;1-linoleoyl-GPG (18:2)*;54885;;;;1.01;0.8451;0.6236
+;;1-palmitoyl-GPI (16:0);35305;;HMDB61695;;0.93;0.4214;0.4728
+;;1-stearoyl-GPI (18:0);19324;;HMDB61696;;0.92;0.5429;0.5247
+;;1-oleoyl-GPI (18:1);36602;;;;0.69;0.0713;0.2936
+;;1-linoleoyl-GPI (18:2)*;36594;;;;1.24;0.1175;0.3225
+;;1-arachidonoyl-GPI (20:4)*;34214;;HMDB61690;;0.88;0.1855;0.3456
+;Plasmalogen;1-(1-enyl-palmitoyl)-2-oleoyl-GPE (P-16:0/18:1)*;52477;;HMDB11342;;1.11;0.2838;0.3946
+;;1-(1-enyl-palmitoyl)-2-linoleoyl-GPE (P-16:0/18:2)*;52677;;HMDB11343;;1.11;0.2739;0.3886
+;;1-(1-enyl-palmitoyl)-2-palmitoyl-GPC (P-16:0/16:0)*;52716;;HMDB11206;11146967;1.03;0.6385;0.5592
+;;1-(1-enyl-palmitoyl)-2-arachidonoyl-GPE (P-16:0/20:4)*;52673;;HMDB11352;;1.08;0.1452;0.3364
+;;1-(1-enyl-stearoyl)-2-oleoyl-GPE (P-18:0/18:1);52614;;HMDB11375;;0.84;0.3085;0.4092
+;;1-(1-enyl-stearoyl)-2-linoleoyl-GPE (P-18:0/18:2)*;52748;;HMDB11376;;1.09;0.2784;0.3906
+;;1-(1-enyl-stearoyl)-2-arachidonoyl-GPE (P-18:0/20:4)*;52475;;HMDB05779;9547058;0.97;0.5825;0.5447
+;Lysoplasmalogen;1-(1-enyl-palmitoyl)-GPE (P-16:0)*;39270;;;;1.12;0.2910;0.3982
+;;1-(1-enyl-oleoyl)-GPE (P-18:1)*;44621;;;;1.01;0.9241;0.6423
+;;1-(1-enyl-stearoyl)-GPE (P-18:0)*;39271;;;;1.12;0.3449;0.4177
+;Glycerolipid Metabolism;glycerol;15122;C00116;HMDB00131;753;0.85;0.2954;0.3982
+;;glycerol 3-phosphate;43847;C00093;HMDB00126;754;0.98;0.9545;0.6453
+;;glycerophosphoglycerol;48857;C03274;;439964;1.08;0.9304;0.6423
+;Monoacylglycerol;1-palmitoleoylglycerol (16:1)*;52431;;HMDB11565;;1.11;0.7247;0.5876
+;;1-oleoylglycerol (18:1);21184;;HMDB11567;5283468;0.82;0.2801;0.3906
+;;1-linoleoylglycerol (18:2);27447;;;5283469;0.60;0.0970;0.3151
+;;1-docosahexaenoylglycerol (22:6);35153;;HMDB11587;;0.73;0.1677;0.3372
+;;2-linoleoylglycerol (18:2);32506;;HMDB11538;5365676;0.81;0.4307;0.4787
+;;2-docosahexaenoylglycerol (22:6)*;48675;;HMDB11557;;0.67;0.0522;0.2725
+;Diacylglycerol;diacylglycerol (16:1/18:2 [2], 16:0/18:3 [1])*;54966;;;;1.14;0.6285;0.5585
+;;palmitoyl-oleoyl-glycerol (16:0/18:1) [2]*;54942;C13861;HMDB07102;;0.97;0.9420;0.6423
+;;palmitoyl-linoleoyl-glycerol (16:0/18:2) [1]*;52633;;HMDB07103;9543695;1.10;0.4471;0.4871
+;;palmitoyl-linoleoyl-glycerol (16:0/18:2) [2]*;52634;;HMDB07103;;0.99;0.9878;0.6577
+;;palmitoyl-linolenoyl-glycerol (16:0/18:3) [2]*;54965;;HMDB07105;;1.17;0.4273;0.4762
+;;palmitoleoyl-linoleoyl-glycerol (16:1/18:2) [1]*;54967;;HMDB07132;;1.37;0.2158;0.3668
+;;palmitoyl-arachidonoyl-glycerol (16:0/20:4) [2]*;54958;;HMDB07112;;0.86;0.1239;0.3263
+;;palmitoyl-docosahexaenoyl-glycerol (16:0/22:6) [1]*;57373;;HMDB07121;;1.14;0.1469;0.3364
+;;palmitoyl-docosahexaenoyl-glycerol (16:0/22:6) [2]*;57374;;HMDB07121;;0.90;0.3170;0.4127
+;;stearoyl-linoleoyl-glycerol (18:0/18:2) [2]*;54947;;;;0.95;0.6618;0.5672
+;;oleoyl-oleoyl-glycerol (18:1/18:1) [2]*;54946;;HMDB07218;;0.87;0.2850;0.3950
+;;oleoyl-linoleoyl-glycerol (18:1/18:2) [1];46798;;HMDB07219;;1.01;0.9230;0.6423
+;;oleoyl-linoleoyl-glycerol (18:1/18:2) [2];46799;;HMDB07219;;0.90;0.3571;0.4283
+;;oleoyl-linolenoyl-glycerol (18:1/18:3) [2]*;54970;;HMDB07220;;0.60;0.0269;0.2308
+;;linoleoyl-linoleoyl-glycerol (18:2/18:2) [1]*;54968;;HMDB07248;;1.08;0.4866;0.5038
+;;linoleoyl-linoleoyl-glycerol (18:2/18:2) [2]*;54969;;HMDB07248;;0.81;0.1806;0.3456
+;;linoleoyl-linolenoyl-glycerol (18:2/18:3) [1]*;54963;;HMDB07249;;1.40;0.2706;0.3851
+;;linoleoyl-linolenoyl-glycerol (18:2/18:3) [2]*;54964;;HMDB07250;;1.10;0.6530;0.5649
+;;stearoyl-arachidonoyl-glycerol (18:0/20:4) [1]*;57450;;;;0.78;0.1362;0.3269
+;;stearoyl-arachidonoyl-glycerol (18:0/20:4) [2]*;57449;;;;0.81;0.0320;0.2496
+;;oleoyl-arachidonoyl-glycerol (18:1/20:4) [2]*;54961;;HMDB07228;;0.84;0.1647;0.3372
+;;linoleoyl-arachidonoyl-glycerol (18:2/20:4) [1]*;54955;;HMDB07257;;0.95;0.7437;0.5955
+;;linoleoyl-arachidonoyl-glycerol (18:2/20:4) [2]*;54956;;HMDB07257;;0.85;0.3349;0.4162
+;;stearoyl-docosahexaenoyl-glycerol (18:0/22:6) [2]*;57368;;;;0.86;0.0214;0.2162
+;;linoleoyl-docosahexaenoyl-glycerol (18:2/22:6) [1]*;54949;;;;0.81;0.1837;0.3456
+;;linoleoyl-docosahexaenoyl-glycerol (18:2/22:6) [2]*;54950;;HMDB07266;;0.72;0.0481;0.2629
+;Sphingolipid Synthesis;sphinganine;17769;C00836;HMDB00269;3126;1.21;0.1247;0.3263
+;;sphingadienine;57426;;;6449795;0.97;0.7474;0.5955
+;;phytosphingosine;1510;C12144;HMDB04610;122121;1.08;0.4799;0.5038
+;Dihydroceramides;N-palmitoyl-sphinganine (d18:0/16:0);52604;;HMDB11760;5283572;0.99;0.9244;0.6423
+;;N-stearoyl-sphinganine (d18:0/18:0)*;1759;;;5283573;1.22;0.2017;0.3606
+;Ceramides;N-palmitoyl-sphingosine (d18:1/16:0);44877;;HMDB04949;5283564;0.91;0.2512;0.3796
+;;N-(2-hydroxypalmitoyl)-sphingosine (d18:1/16:0(2OH));57697;;;;0.92;0.5375;0.5247
+;;N-stearoyl-sphingosine (d18:1/18:0)*;54979;;HMDB04950;5283565;1.09;0.5423;0.5247
+;;N-arachidoyl-sphingosine (d18:1/20:0)*;57424;;HMDB04951;5283566;0.96;0.5380;0.5247
+;;N-palmitoyl-sphingadienine (d18:2/16:0)*;57416;;;;0.96;0.6092;0.5564
+;;N-behenoyl-sphingadienine (d18:2/22:0)*;57372;;;;0.89;0.1574;0.3372
+;;ceramide (d18:1/14:0, d16:1/16:0)*;57432;;;;0.87;0.1247;0.3263
+;;ceramide (d18:1/17:0, d17:1/18:0)*;57434;;;;0.99;0.8499;0.6247
+;;ceramide (d16:1/24:1, d18:1/22:1)*;57437;;;;0.88;0.1475;0.3364
+;;ceramide (d18:2/24:1, d18:1/24:2)*;57443;;;;0.99;0.8609;0.6278
+;Hexosylceramides (HCER);glycosyl-N-palmitoyl-sphingosine (d18:1/16:0);53013;;;;0.85;0.1729;0.3413
+;;glycosyl-N-stearoyl-sphingosine (d18:1/18:0);52234;;;;0.97;0.8527;0.6259
+;;glycosyl-N-nervonoyl-sphingosine (d18:1/24:1)*;57369;;;;0.95;0.6183;0.5585
+;;glycosyl ceramide (d18:1/20:0, d16:1/22:0)*;57595;;;;0.91;0.3276;0.4144
+;;glycosyl ceramide (d18:2/24:1, d18:1/24:2)*;57453;;;;0.97;0.8218;0.6161
+;Lactosylceramides (LCER);lactosyl-N-palmitoyl-sphingosine (d18:1/16:0);53010;;;;1.05;0.7849;0.6086
+;;lactosyl-N-behenoyl-sphingosine (d18:1/22:0)*;57422;;;;1.03;0.7000;0.5788
+;;lactosyl-N-nervonoyl-sphingosine (d18:1/24:1)*;57370;;;;1.16;0.1556;0.3372
+;Dihydrosphingomyelins;palmitoyl dihydrosphingomyelin (d18:0/16:0)*;52434;;;9939965;1.03;0.6214;0.5585
+;;behenoyl dihydrosphingomyelin (d18:0/22:0)*;57331;;HMDB12091;;0.95;0.4947;0.5038
+;;sphingomyelin (d18:0/18:0, d19:0/17:0)*;57473;;HMDB12087;;1.24;0.1363;0.3269
+;;sphingomyelin (d18:0/20:0, d16:0/22:0)*;57476;;;;1.10;0.3035;0.4036
+;Sphingomyelins;palmitoyl sphingomyelin (d18:1/16:0);37506;;;9939941;0.92;0.0560;0.2734
+;;hydroxypalmitoyl sphingomyelin (d18:1/16:0(OH))**;62851;;;;1.19;0.2860;0.3950
+;;stearoyl sphingomyelin (d18:1/18:0);19503;C00550;HMDB01348;6453725;1.07;0.5306;0.5231
+;;behenoyl sphingomyelin (d18:1/22:0)*;48492;;HMDB12103;;0.94;0.3315;0.4149
+;;tricosanoyl sphingomyelin (d18:1/23:0)*;52436;;HMDB12105;;0.98;0.7628;0.6023
+;;lignoceroyl sphingomyelin (d18:1/24:0);57330;;;;0.99;0.8351;0.6197
+;;sphingomyelin (d18:2/23:1)*;57482;;;;1.01;0.9255;0.6423
+;;sphingomyelin (d18:2/24:2)*;57479;;;;0.73;0.0547;0.2734
+;;sphingomyelin (d18:1/14:0, d16:1/16:0)*;42463;;HMDB12097;11433862;0.88;0.1293;0.3269
+;;sphingomyelin (d17:1/16:0, d18:1/15:0, d16:1/17:0)*;52433;;;;0.84;0.0071;0.1394
+;;sphingomyelin (d18:2/16:0, d18:1/16:1)*;42459;;;;0.92;0.2393;0.3796
+;;sphingomyelin (d18:1/17:0, d17:1/18:0, d19:1/16:0);52615;;;;1.00;0.9539;0.6453
+;;sphingomyelin (d18:1/18:1, d18:2/18:0);37529;;HMDB12101;6443882;1.05;0.6293;0.5585
+;;sphingomyelin (d18:1/19:0, d19:1/18:0)*;57475;;;;1.06;0.6070;0.5564
+;;sphingomyelin (d18:1/20:0, d16:1/22:0)*;48490;;HMDB12102;;1.01;0.8937;0.6359
+;;sphingomyelin (d18:1/20:1, d18:2/20:0)*;48491;;;;0.95;0.7479;0.5955
+;;sphingomyelin (d18:1/21:0, d17:1/22:0, d16:1/23:0)*;52495;;;;0.93;0.3191;0.4127
+;;sphingomyelin (d18:2/21:0, d16:2/23:0)*;57480;;;;0.93;0.2600;0.3796
+;;sphingomyelin (d18:1/22:1, d18:2/22:0, d16:1/24:1)*;48493;;HMDB12104;;0.94;0.2968;0.3982
+;;sphingomyelin (d18:1/22:2, d18:2/22:1, d16:1/24:2)*;57477;;;;1.04;0.7073;0.5792
+;;sphingomyelin (d18:2/23:0, d18:1/23:1, d17:1/24:1)*;52435;;;;0.98;0.7022;0.5788
+;;sphingomyelin (d18:1/24:1, d18:2/24:0)*;47153;;HMDB12107;;0.98;0.6496;0.5642
+;;sphingomyelin (d18:2/24:1, d18:1/24:2)*;52437;;;;1.05;0.3184;0.4127
+;;sphingomyelin (d18:1/25:0, d19:0/24:1, d20:1/23:0, d19:1/24:0)*;57478;;;;0.73;0.0194;0.2121
+;Sphingosines;sphingosine;17747;C00319;HMDB00252;5353955;1.05;0.4890;0.5038
+;;hexadecasphingosine (d16:1)*;57428;;;;0.86;0.1422;0.3353
+;;heptadecasphingosine (d17:1);57427;;;5283557;0.98;0.7855;0.6086
+;Mevalonate Metabolism;3-hydroxy-3-methylglutarate;531;C03761;HMDB00355;1662;1.43;0.1801;0.3456
+;Sterol;cholesterol;63;C00187;HMDB00067;11025495;0.97;0.6843;0.5735
+;;7-alpha-hydroxy-3-oxo-4-cholestenoate (7-Hoca);36776;C17337;HMDB12458;3081085;1.14;0.5795;0.5436
+;;4-cholesten-3-one;38125;C00599;HMDB00921;91477;1.47;0.0041;0.1059
+;;campesterol;33997;C01789;HMDB02869;173183;0.80;0.0479;0.2629
+;;7-hydroxycholesterol (alpha or beta);47890;;HMDB06119;107722;2.29;0.0000;0.0052
+;Corticosteroids;corticosterone;5983;C02140;HMDB01547;5753;1.07;0.6290;0.5585
+;Primary Bile Acid Metabolism;cholate;22842;C00695;HMDB00619;221493;2.38;0.0953;0.3147
+;;glycocholate;18476;C01921;HMDB00138;10140;1.02;0.4158;0.4708
+;;taurocholate;18497;C05122;HMDB00036;6675;1.22;0.5361;0.5247
+;;chenodeoxycholate;1563;C02528;HMDB00518;10133;0.97;0.8869;0.6338
+;;taurochenodeoxycholate;18494;C05465;HMDB00951;387316;1.37;0.2541;0.3796
+;;beta-muricholate;31885;C17726;HMDB00415;5283853;1.55;0.1469;0.3364
+;;alpha-muricholate;34092;C17647;HMDB00506;3083761;1.32;0.4954;0.5038
+;;tauro-beta-muricholate;33983;;HMDB00932;168408;1.70;0.2068;0.3636
+;Secondary Bile Acid Metabolism;deoxycholate;1114;C04483;HMDB00626;222528;0.97;0.9735;0.6527
+;;taurodeoxycholate;12261;C05463;HMDB00896;2733768;0.92;0.5795;0.5436
+;;taurodeoxycholic acid 3-sulfate;62889;;;;1.26;0.5401;0.5247
+;;6-beta-hydroxylithocholate;36807;C15515;HMDB00811;5283821;1.04;0.9335;0.6423
+;;taurolithocholate;31889;C02592;HMDB00722;10595;1.27;0.6334;0.5592
+;;taurolithocholate 3-sulfate;36850;C03642;HMDB02580;440071;1.01;0.9812;0.6551
+;;ursodeoxycholate;1605;C07880;HMDB00946;31401;1.88;0.0664;0.2843
+;;tauroursodeoxycholate;39378;;HMDB00874;9848818;2.35;0.0333;0.2502
+;;6-oxolithocholate;46336;;;164960;0.60;0.5379;0.5247
+;;hyocholate;34093;C17649;HMDB00760;92805;0.65;0.3896;0.4522
+;;taurohyocholate*;42603;;;;0.84;0.8298;0.6184
+;;hyodeoxycholate;27531;C15517;HMDB00733;5283820;0.47;0.0790;0.3025
+;;taurohyodeoxycholic acid;43588;;;119046;0.85;0.7676;0.6043
+;;3-dehydrocholate;43835;;HMDB00502;159655;1.28;0.5934;0.5517
+Nucleotide;Purine Metabolism, (Hypo)Xanthine/Inosine containing;AICA ribonucleotide;38325;C04677;HMDB01517;65110;0.63;0.3340;0.4162
+;;inosine;1123;C00294;HMDB00195;6021;0.84;0.2442;0.3796
+;;hypoxanthine;3127;C00262;HMDB00157;790;0.96;0.4809;0.5038
+;;xanthine;3147;C00385;HMDB00292;1188;1.00;0.9462;0.6423
+;;xanthosine;15136;C01762;HMDB00299;64959;0.74;0.0385;0.2562
+;;2'-deoxyinosine;15076;C05512;HMDB00071;65058;0.90;0.3767;0.4427
+;;urate;1604;C00366;HMDB00289;1175;0.84;0.3401;0.4164
+;;uric acid ribonucleoside*;62102;;;164933;0.48;0.0021;0.0817
+;;allantoin;1107;C02350;HMDB00462;204;1.01;0.9173;0.6423
+;;allantoic acid;33434;C00499;HMDB01209;203;0.84;0.1135;0.3225
+;Purine Metabolism, Adenine containing;adenosine 5'-diphosphate (ADP);3108;C00008;HMDB01341;6022;0.80;0.1634;0.3372
+;;adenosine 5'-monophosphate (AMP);32342;C00020;HMDB00045;6083;0.92;0.4606;0.4952
+;;adenosine 3'-monophosphate (3'-AMP);35142;C01367;HMDB03540;41211;0.87;0.3159;0.4127
+;;adenosine 2'-monophosphate (2'-AMP);36815;C00946;HMDB11617;94136;0.81;0.1993;0.3576
+;;adenosine 3',5'-diphosphate;15691;C00054;HMDB00061;159296;0.83;0.1980;0.3571
+;;adenosine;555;C00212;HMDB00050;60961;0.85;0.1303;0.3269
+;;adenine;554;C00147;HMDB00034;190;0.98;0.8027;0.6101
+;;N1-methyladenosine;15650;C02494;HMDB03331;27476;0.78;0.0676;0.2870
+;;N6-methyladenosine;37114;;HMDB04044;102175;0.77;0.0322;0.2496
+;;N6-carbamoylthreonyladenosine;35157;;HMDB41623;161466;0.79;0.1848;0.3456
+;;2'-deoxyadenosine 5'-monophosphate;46333;C00360;HMDB00905;12599;0.94;0.6035;0.5564
+;;N6-succinyladenosine;48130;;HMDB00912;165243;0.71;0.0569;0.2734
+;Purine Metabolism, Guanine containing;guanosine 5'- monophosphate (5'-GMP);2849;C00144;HMDB01397;6804;0.93;0.6387;0.5592
+;;guanosine;1573;C00387;HMDB00133;6802;0.87;0.2772;0.3906
+;;guanine;32352;C00242;HMDB00132;764;0.90;0.3718;0.4394
+;;7-methylguanine;35114;C02242;HMDB00897;11361;0.86;0.1475;0.3364
+;;2'-deoxyguanosine 5'-monophosphate (dGMP);35662;C00362;HMDB01044;65059;0.86;0.2865;0.3950
+;;2'-deoxyguanosine;1411;C00330;HMDB00085;187790;0.88;0.2667;0.3850
+;Pyrimidine Metabolism, Orotate containing;N-carbamoylaspartate;1594;C00438;HMDB00828;93072;0.93;0.4941;0.5038
+;;dihydroorotate;601;C00337;HMDB03349;648;0.83;0.2580;0.3796
+;;orotate;1505;C00295;HMDB00226;967;1.02;0.9996;0.6611
+;;orotidine;35172;;HMDB00788;92751;0.98;0.7890;0.6096
+;Pyrimidine Metabolism, Uracil containing;uridine 5'-monophosphate (UMP);2856;C00105;HMDB00288;6030;0.96;0.9244;0.6423
+;;uridine;606;C00299;HMDB00296;6029;1.09;0.4820;0.5038
+;;uracil;605;C00106;HMDB00300;1174;0.88;0.1983;0.3571
+;;pseudouridine;33442;C02067;HMDB00767;15047;0.90;0.2940;0.3982
+;;5,6-dihydrouridine;61833;;;94312;1.00;0.8729;0.6330
+;;2'-O-methyluridine;57655;;;102212;0.73;0.0931;0.3147
+;;5-methyluridine (ribothymidine);35136;;HMDB00884;445408;0.88;0.7122;0.5823
+;;2'-deoxyuridine;52602;C00526;HMDB00012;13712;1.01;0.8255;0.6171
+;;3-ureidopropionate;3155;C02642;HMDB00026;111;1.74;0.2437;0.3796
+;;beta-alanine;55;C00099;HMDB00056;239;1.02;0.7931;0.6097
+;Pyrimidine Metabolism, Cytidine containing;cytidine 5'-monophosphate (5'-CMP);2372;C00055;HMDB00095;6131;1.04;0.5341;0.5247
+;;cytidine;514;C00475;HMDB00089;6175;1.03;0.7965;0.6101
+;;cytosine;573;C00380;HMDB00630;597;1.29;0.1596;0.3372
+;;3-methylcytidine;35132;;;159649;0.75;0.0035;0.1059
+;;2'-deoxycytidine 5'-monophosphate;533;C00239;HMDB01202;13945;0.88;0.3280;0.4144
+;;2'-deoxycytidine;15949;C00881;HMDB00014;13711;0.82;0.1641;0.3372
+;;2'-O-methylcytidine;57554;;;150971;0.75;0.1882;0.3476
+;;5-methyl-2'-deoxycytidine;38159;C03592;HMDB02224;440055;0.99;0.9439;0.6423
+;Pyrimidine Metabolism, Thymine containing;thymidine;2183;C00214;HMDB00273;5789;1.03;0.7279;0.5882
+;;thymine;604;C00178;HMDB00262;1135;0.83;0.2561;0.3796
+;;3-aminoisobutyrate;1566;C05145;HMDB03911;64956;1.06;0.6104;0.5564
+;Purine and Pyrimidine Metabolism;methylphosphate;37070;;HMDB61711;13130;0.95;0.5727;0.5396
+Cofactors and Vitamins;Nicotinate and Nicotinamide Metabolism;quinolinate;1899;C03722;HMDB00232;1066;1.24;0.3979;0.4570
+;;nicotinate;1504;C00253;HMDB01488;938;1.00;0.9377;0.6423
+;;nicotinate ribonucleoside;33471;C05841;HMDB06809;161234;1.63;0.0279;0.2308
+;;nicotinamide;594;C00153;HMDB01406;936;0.94;0.4195;0.4718
+;;nicotinamide ribonucleotide (NMN);22152;C00455;HMDB00229;14180;1.09;0.6073;0.5564
+;;nicotinamide adenine dinucleotide (NAD+);5278;C00003;HMDB00902;5893;0.88;0.1070;0.3151
+;;1-methylnicotinamide;27665;C02918;HMDB00699;457;0.85;0.6539;0.5649
+;;trigonelline (N'-methylnicotinate);32401;C01004;HMDB00875;5570;1.13;0.5526;0.5309
+;;N1-Methyl-2-pyridone-5-carboxamide;40469;C05842;HMDB04193;69698;0.96;0.7893;0.6096
+;;adenosine 5'-diphosphoribose (ADP-ribose);558;C00301;HMDB01178;192;0.88;0.5225;0.5173
+;Riboflavin Metabolism;riboflavin (Vitamin B2);1827;C00255;HMDB00244;493570;0.86;0.0915;0.3147
+;;flavin adenine dinucleotide (FAD);2134;C00016;HMDB01248;643975;0.87;0.1065;0.3151
+;;flavin mononucleotide (FMN);15797;C00061;HMDB01520;710;0.85;0.1063;0.3151
+;Pantothenate and CoA Metabolism;pantothenate;1508;C00864;HMDB00210;6613;0.93;0.3647;0.4341
+;;phosphopantetheine;15504;C01134;HMDB01416;987;0.38;0.1754;0.3423
+;;3'-dephosphocoenzyme A;18289;C00882;HMDB01373;444485;0.59;0.2642;0.3832
+;;coenzyme A;46322;C00010;HMDB01423;317;0.48;0.2544;0.3796
+;Ascorbate and Aldarate Metabolism;ascorbate (Vitamin C);32354;C00072;HMDB00044;54670067;1.01;0.3885;0.4522
+;;ascorbic acid 2-sulfate;63590;;;86484;0.70;0.0163;0.2121
+;;ascorbic acid 3-sulfate*;63687;;;11425365;0.82;0.1159;0.3225
+;;dehydroascorbate;34302;C05422;HMDB01264;440667;1.17;0.3299;0.4144
+;;2-O-methylascorbic acid;63990;;;99779;1.10;0.3754;0.4425
+;;threonate;27738;C01620;HMDB00943;151152;0.94;0.5162;0.5139
+;;oxalate (ethanedioate);20694;C00209;HMDB02329;971;1.17;0.1162;0.3225
+;;gulonate*;46957;C00257;HMDB03290;152304;1.13;0.2095;0.3636
+;Tocopherol Metabolism;alpha-tocopherol;1561;C02477;HMDB01893;14985;0.49;0.0207;0.2162
+;;gamma-tocopherol/beta-tocopherol;52473;;;;1.31;0.1845;0.3456
+;Folate Metabolism;folate;1826;C00504;HMDB00121;6037;0.94;0.5803;0.5436
+;;7,8-dihydrofolate;1708;C00415;HMDB01056;98792;0.84;0.3524;0.4248
+;Tetrahydrobiopterin Metabolism;biopterin;12358;C06313;HMDB00468;445040;0.91;0.4090;0.4654
+;;dihydrobiopterin;35129;C00268;HMDB00038;1879;0.81;0.1845;0.3456
+;Pterin Metabolism;pterin;43023;C00715;HMDB00802;73000;0.74;0.0031;0.1059
+;;xanthopterin;54728;;;8397;0.77;0.1025;0.3151
+;Hemoglobin and Porphyrin Metabolism;protoporphyrin IX;39321;C02191;HMDB00241;4971;0.58;0.0180;0.2121
+;;heme;41754;C00032;HMDB03178;26945;1.51;0.6614;0.5672
+;;bilirubin (Z,Z);43807;C00486;HMDB00054;5280352;1.11;0.8618;0.6278
+;;biliverdin;2137;C00500;HMDB01008;5353439;0.76;0.0276;0.2308
+;Thiamine Metabolism;thiamin (Vitamin B1);5341;C00378;HMDB00235;1130;0.89;0.3235;0.4144
+;;thiamin monophosphate;15798;C01081;HMDB02666;3382778;1.02;0.9352;0.6423
+;;thiamin diphosphate;35670;C00068;HMDB01372;1132;1.37;0.3276;0.4144
+;Vitamin A Metabolism;retinol (Vitamin A);1806;C00473;HMDB00305;445354;0.61;0.0060;0.1269
+;;retinal;40807;C00376;HMDB01358;638015;0.86;0.2483;0.3796
+;Vitamin B6 Metabolism;pyridoxamine;2150;C00534;HMDB01431;1052;1.03;0.8412;0.6221
+;;pyridoxamine phosphate;3138;C00647;HMDB01555;1053;0.90;0.1600;0.3372
+;;pyridoxal phosphate;5331;C00018;HMDB01491;1051;0.96;0.7945;0.6097
+;;pyridoxal;1651;C00250;HMDB01545;1050;0.87;0.2689;0.3851
+;;pyridoxate;31555;C00847;HMDB00017;6723;0.95;0.8075;0.6101
+Xenobiotics;Benzoate Metabolism;hippurate;15753;C01586;HMDB00714;464;1.29;0.2125;0.3655
+;;benzoate;15778;C00180;HMDB01870;243;1.00;0.9777;0.6546
+;;p-cresol sulfate;36103;;HMDB11635;4615423;1.01;0.3900;0.4522
+;;phenylpropionylglycine;35434;;HMDB00860;152323;1.32;0.4382;0.4840
+;;3-phenylpropionate (hydrocinnamate);15749;C05629;HMDB00764;107;1.27;0.3958;0.4556
+;Food Component/Plant;3-formylindole;62863;C08493;HMDB29737;10256;0.90;0.2355;0.3796
+;;gluconate;587;C00257;HMDB00625;10690;0.71;0.0946;0.3147
+;;beta-guanidinopropanoate;35101;C03065;HMDB13222;67701;2.13;0.0000;0.0028
+;;cinnamoylglycine;38637;;HMDB11621;709625;1.33;0.2128;0.3655
+;;enterolactone sulfate;64041;;;;0.49;0.0152;0.2121
+;;equol sulfate;40478;;;;1.23;0.2927;0.3982
+;;ergothioneine;37459;C05570;HMDB03045;3032311;1.00;0.9026;0.6394
+;;ferulic acid 4-sulfate;47114;;HMDB29200;6305574;3.72;0.0160;0.2121
+;;quinate;18335;C00296;HMDB03072;6508;0.87;0.9079;0.6404
+;;histidine betaine (hercynine)*;62278;;;3083620;1.21;0.2198;0.3699
+;;homostachydrine*;33009;C08283;HMDB33433;441447;1.36;0.1294;0.3269
+;;kojibiose;21040;C19632;HMDB11742;164939;0.67;0.1117;0.3207
+;;mannonate*;62864;;;3246006;0.78;0.1115;0.3207
+;;stachydrine;34384;C10172;HMDB04827;115244;1.32;0.1534;0.3372
+;;methyl glucopyranoside (alpha + beta);46144;;;;0.92;0.6267;0.5585
+;;tartronate (hydroxymalonate);20693;C02287;HMDB35227;45;1.09;0.4475;0.4871
+;Drug - Topical Agents;salicylate;1515;C00805;HMDB01895;338;0.71;0.2589;0.3796
+;;2,6-dihydroxybenzoic acid;63042;;HMDB13676;9338;1.85;0.0189;0.2121
+;Chemical;sulfate*;46960;C00059;HMDB01448;1118;0.99;0.7848;0.6086
+;;ectoine;35651;C06231;;126041;2.63;0.0812;0.3025
+;;thioproline;53231;;;93176;0.42;0.1318;0.3269
+;;4-chlorobenzoic acid;63988;;;;0.98;0.7808;0.6078
+Partially Characterized Molecules;Partially Characterized Molecules;branched-chain, straight-chain, or cyclopropyl 12:1 fatty acid*;63683;;;;1.47;0.1023;0.3151

@@ -1,0 +1,45 @@
+# R session and RStudio project state
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Python environment
+.venv/
+__pycache__/
+
+# Rendered Quarto/HTML output (regenerated from source)
+*.html
+*_files/
+.quarto/
+_freeze/
+
+# MetaboAnalystR caches and scratch files
+output/04_metaboanalystr_enrichment/*.qs
+output/04_metaboanalystr_enrichment/*.csv
+output/04_metaboanalystr_enrichment/*.json
+output/04_metaboanalystr_enrichment/mset_membership_*.png
+output/05_enrichment_background_audit/_metaboanalyst_scratch/
+output/**/_metaboanalyst_scratch/
+
+# OS and editor clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+
+# Stray MetaboAnalystR side files written to project root
+/compound_db.qs
+/current.msetlib.qs
+/datalist.csv
+/name_map.csv
+/msea_ora_result.csv
+/ora_membership.json
+/syn_nms.qs
+/smpdb_pathway.qs
+
+# Local assistant settings and chat exports (not project content)
+.posit/
+conversation-export-*.md
+Integrated omics analysis of Rps2-A226Y mutant liver.md

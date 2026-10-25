@@ -1,0 +1,813 @@
+---
+title: "Integrated Transcriptome–Metabolome Analysis of Rps2-A226Y Mutant Liver"
+subtitle: "Part 2: Temporal Comparison & Integration"
+author: "Ivan Osinnii"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    df-print: paged
+    fig-width: 10
+    fig-height: 7
+execute:
+  warning: false
+  message: false
+  freeze: true
+---
+
+```{r}
+#| label: setup
+#| echo: false
+
+knitr::opts_chunk$set(dpi = 150)
+```
+
+## Overview
+
+This document (Part 2) builds on the cleaned data from Part 1 to compare
+molecular changes across the **9-month** and **15-month** timepoints.
+We examine temporal concordance, pathway progression, gene-level trajectories,
+and produce an integrated summary of the Rps2-A226Y mutant liver phenotype.
+
+## Libraries & Data Loading
+
+```{r}
+#| label: load-libraries
+#| echo: true
+
+# Load core packages
+library(tidyverse)
+library(here)
+library(pals)
+library(patchwork)
+library(ggrepel)
+library(scales)
+library(gprofiler2)
+```
+
+All cleaned data comes from Part 1 outputs. This ensures reproducibility and
+avoids redundant data processing.
+
+```{r}
+#| label: load-data
+#| echo: true
+
+# Load cleaned datasets from Script 1 output
+input_dir <- here("output", "01_data_loading_and_pathway_analysis")
+
+met_9m  <- readRDS(file.path(input_dir, "met_9m_clean.rds"))
+met_15m <- readRDS(file.path(input_dir, "met_15m_clean.rds"))
+tx_9m   <- readRDS(file.path(input_dir, "tx_9m_clean.rds"))
+tx_15m  <- readRDS(file.path(input_dir, "tx_15m_clean.rds"))
+
+pw_summary_9m  <- readRDS(file.path(input_dir, "pw_summary_9m.rds"))
+pw_summary_15m <- readRDS(file.path(input_dir, "pw_summary_15m.rds"))
+pathway_map    <- readRDS(file.path(input_dir, "pathway_map.rds"))
+
+cat("Data loaded successfully from:", input_dir, "\n")
+```
+
+## Temporal Merging
+
+We inner-join metabolites and genes by name across timepoints to create paired
+datasets. This lets us compute correlation statistics and identify features
+that are consistently or differentially regulated across ages.
+
+```{r}
+#| label: merge-metabolites
+#| echo: true
+
+# Merge metabolites across timepoints by biochemical name
+met_merged <- met_9m %>%
+  dplyr::select(biochemical, sub_pathway, super_pathway,
+                log2fc_9m = log2fc, pval_9m = p_value) %>%
+  inner_join(
+    met_15m %>%
+      dplyr::select(biochemical, log2fc_15m = log2fc, pval_15m = p_value),
+    by = "biochemical"
+  ) %>%
+  mutate(
+    sig_cat = case_when(
+      pval_9m < 0.05 & pval_15m < 0.05 ~ "Both",
+      pval_9m < 0.05                   ~ "9m only",
+      pval_15m < 0.05                  ~ "15m only",
+      TRUE                             ~ "Neither"
+    )
+  )
+
+cat("Common metabolites:", nrow(met_merged), "\n")
+count(met_merged, sig_cat) %>% knitr::kable()
+```
+
+```{r}
+#| label: merge-genes
+#| echo: true
+
+# Merge genes across timepoints by gene name
+tx_merged <- tx_9m %>%
+  dplyr::select(gene_name, log2fc_9m = log2fc, pval_9m = p_value, fdr_9m = fdr) %>%
+  inner_join(
+    tx_15m %>%
+      dplyr::select(gene_name, log2fc_15m = log2fc, pval_15m = p_value, fdr_15m = fdr),
+    by = "gene_name"
+  ) %>%
+  mutate(
+    sig_cat = case_when(
+      fdr_9m < 0.05 & fdr_15m < 0.05 ~ "Both",
+      fdr_9m < 0.05                  ~ "9m only",
+      fdr_15m < 0.05                 ~ "15m only",
+      TRUE                           ~ "Neither"
+    )
+  )
+
+cat("Common genes:", nrow(tx_merged), "\n")
+count(tx_merged, sig_cat) %>% knitr::kable()
+```
+
+### Correlation Analysis
+
+Strong positive correlation between timepoints indicates a persistent and
+progressive phenotype rather than a transient response.
+
+```{r}
+#| label: correlations
+#| echo: true
+
+# Pearson and Spearman correlations for both omics layers
+cor_met_pearson  <- cor.test(met_merged$log2fc_9m, met_merged$log2fc_15m,
+                             method = "pearson")
+cor_met_spearman <- cor.test(met_merged$log2fc_9m, met_merged$log2fc_15m,
+                             method = "spearman")
+cor_tx_pearson   <- cor.test(tx_merged$log2fc_9m, tx_merged$log2fc_15m,
+                             method = "pearson")
+cor_tx_spearman  <- cor.test(tx_merged$log2fc_9m, tx_merged$log2fc_15m,
+                             method = "spearman")
+
+tibble(
+  Omics = c("Metabolome", "Metabolome", "Transcriptome", "Transcriptome"),
+  Method = rep(c("Pearson", "Spearman"), 2),
+  r = c(cor_met_pearson$estimate, cor_met_spearman$estimate,
+        cor_tx_pearson$estimate, cor_tx_spearman$estimate),
+  p_value = c(cor_met_pearson$p.value, cor_met_spearman$p.value,
+              cor_tx_pearson$p.value, cor_tx_spearman$p.value)
+) %>%
+  knitr::kable(caption = "Temporal fold-change correlations (9m vs 15m)",
+               digits = 4)
+```
+
+## Figure 6: Temporal Scatter Plots
+
+Scatter plots of 9m vs 15m fold changes for both metabolites and genes. Points
+are coloured by significance category. The identity line (dashed) indicates
+equal fold change at both ages.
+
+```{r}
+#| label: fig-temporal-scatter
+#| echo: true
+#| fig-width: 14
+#| fig-height: 6.5
+
+# Colour palette for significance categories
+sig_colors <- c(Both = "#e7298a", `9m only` = "#66a61e",
+                `15m only` = "#7570b3", Neither = "#cccccc")
+sig_order  <- c("Neither", "9m only", "15m only", "Both")
+
+# Panel A: Metabolome scatter
+p_met_scatter <- met_merged %>%
+  mutate(sig_cat = factor(sig_cat, levels = sig_order)) %>%
+  arrange(sig_cat) %>%
+  ggplot(aes(x = log2fc_9m, y = log2fc_15m, color = sig_cat)) +
+  geom_point(aes(alpha = sig_cat, size = sig_cat)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed",
+              color = "black", alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "grey60", linewidth = 0.4) +
+  geom_vline(xintercept = 0, color = "grey60", linewidth = 0.4) +
+  # Label top metabolites significant at both timepoints
+  geom_text_repel(
+    data = . %>% filter(sig_cat == "Both") %>%
+      slice_max(abs(log2fc_15m), n = 8),
+    aes(label = biochemical), size = 2.5, max.overlaps = 15,
+    segment.color = "grey50", segment.size = 0.3, show.legend = FALSE
+  ) +
+  scale_color_manual(values = sig_colors, name = "Significant at") +
+  scale_alpha_manual(values = c(Neither = 0.15, `9m only` = 0.7,
+                                `15m only` = 0.7, Both = 0.85),
+                     guide = "none") +
+  scale_size_manual(values = c(Neither = 0.8, `9m only` = 1.8,
+                               `15m only` = 1.8, Both = 2.2),
+                    guide = "none") +
+  labs(
+    title = paste0("Metabolome (n = ", nrow(met_merged), ")"),
+    subtitle = sprintf("r = %.3f, \u03c1 = %.3f",
+                       cor_met_pearson$estimate, cor_met_spearman$estimate),
+    x = expression(log[2] * "FC at 9 Months"),
+    y = expression(log[2] * "FC at 15 Months")
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "bottom",
+        panel.grid.minor = element_blank())
+
+# Panel B: Transcriptome scatter
+p_tx_scatter <- tx_merged %>%
+  mutate(sig_cat = factor(sig_cat, levels = sig_order)) %>%
+  arrange(sig_cat) %>%
+  ggplot(aes(x = log2fc_9m, y = log2fc_15m, color = sig_cat)) +
+  geom_point(aes(alpha = sig_cat, size = sig_cat)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed",
+              color = "black", alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "grey60", linewidth = 0.4) +
+  geom_vline(xintercept = 0, color = "grey60", linewidth = 0.4) +
+  scale_color_manual(values = sig_colors, name = "Significant at") +
+  scale_alpha_manual(values = c(Neither = 0.05, `9m only` = 0.5,
+                                `15m only` = 0.15, Both = 0.8),
+                     guide = "none") +
+  scale_size_manual(values = c(Neither = 0.3, `9m only` = 1,
+                               `15m only` = 1, Both = 1.8),
+                    guide = "none") +
+  coord_cartesian(
+    xlim = c(-1, 1) * max(abs(c(tx_merged$log2fc_9m,
+                                tx_merged$log2fc_15m))) * 0.5,
+    ylim = c(-1, 1) * max(abs(c(tx_merged$log2fc_9m,
+                                tx_merged$log2fc_15m))) * 0.5
+  ) +
+  labs(
+    title = paste0("Transcriptome (n = ", nrow(tx_merged), ")"),
+    subtitle = sprintf("r = %.3f, \u03c1 = %.3f",
+                       cor_tx_pearson$estimate, cor_tx_spearman$estimate),
+    x = expression(log[2] * "FC at 9 Months"),
+    y = expression(log[2] * "FC at 15 Months")
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "bottom",
+        panel.grid.minor = element_blank())
+
+# Combine panels
+p_temporal_scatter <- p_met_scatter + p_tx_scatter +
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "Temporal Concordance of Fold Changes: 9 vs 15 Months",
+    subtitle = "Rps2-A226Y Mutant vs WT, Liver",
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 14),
+      plot.subtitle = element_text(size = 11)
+    )
+  ) &
+  theme(legend.position = "bottom")
+
+p_temporal_scatter
+```
+
+## Figure 7: Temporal Pathway Comparison
+
+Paired horizontal bar charts showing mean log2 FC of significant features at
+9m vs 15m, faceted by omics layer. This highlights the escalation (or
+resolution) of pathway dysregulation over time.
+ 
+```{r}
+#| label: fig-temporal-pathway
+#| echo: true
+#| fig-width: 14
+#| fig-height: 7
+
+# Combine pathway summaries with timepoint labels
+pw_combined <- bind_rows(
+  pw_summary_9m  %>% mutate(timepoint = "9 Months"),
+  pw_summary_15m %>% mutate(timepoint = "15 Months")
+)
+
+# Reshape for plotting
+pw_plot <- pw_combined %>%
+  pivot_longer(
+    cols = c(mean_gene_log2fc, mean_met_log2fc),
+    names_to = "omics", values_to = "mean_log2fc"
+  ) %>%
+  mutate(
+    omics_label = if_else(omics == "mean_gene_log2fc",
+                          "Transcriptome (FDR < 0.05)",
+                          "Metabolome (p < 0.05)"),
+    n_sig = if_else(omics == "mean_gene_log2fc", n_genes_sig, n_met_sig),
+    n_found = if_else(omics == "mean_gene_log2fc", n_genes_found, n_met_found),
+    pathway = fct_rev(fct_inorder(pathway)),
+    direction = case_when(
+      mean_log2fc > 0 ~ "Up",
+      mean_log2fc < 0 ~ "Down",
+      TRUE            ~ "None"
+    )
+  )
+
+p_temporal_pathway <- ggplot(
+  pw_plot,
+  aes(x = mean_log2fc, y = pathway, fill = direction, alpha = timepoint)
+) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_vline(xintercept = 0, color = "grey50", linetype = "dashed") +
+  # Annotation labels showing n significant
+  geom_text(
+    aes(label = paste0("n=", n_sig),
+        hjust = if_else(mean_log2fc >= 0, -0.15, 1.15)),
+    position = position_dodge(width = 0.7),
+    size = 2.8, show.legend = FALSE
+  ) +
+  scale_fill_manual(
+    values = c(Up = "#d95f02", Down = "#1b9e77", None = "#999999"),
+    name = "Direction"
+  ) +
+  scale_alpha_manual(
+    values = c("9 Months" = 0.5, "15 Months" = 0.85),
+    name = "Timepoint"
+  ) +
+  facet_wrap(~ omics_label, scales = "free_x") +
+  labs(
+    title = "Temporal Progression of Pathway Dysregulation: 9 vs 15 Months",
+    subtitle = "Rps2-A226Y Mutant vs WT, Liver, female mice",
+    x = expression("Mean " * log[2] * " Fold Change"),
+    y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    strip.text = element_text(face = "bold", size = 11),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom"
+  )
+
+p_temporal_pathway
+```
+
+## g:Profiler Enrichment Analysis
+
+We use g:Profiler to query KEGG and Reactome pathway databases for enrichment
+among genes significant at each timepoint.
+
+```{r}
+#| label: gprofiler-enrichment
+#| echo: true
+
+# Extract significant gene lists (filtering date-corrupted names)
+sig_genes_9m <- tx_9m %>%
+  filter(significant, is.character(gene_name)) %>%
+  pull(gene_name)
+
+sig_genes_15m <- tx_15m %>%
+  filter(significant, is.character(gene_name)) %>%
+  pull(gene_name)
+
+cat("Significant genes — 9m:", length(sig_genes_9m),
+    "| 15m:", length(sig_genes_15m), "\n")
+
+# Run g:Profiler for KEGG and Reactome
+enrich_9m <- gost(
+  query = sig_genes_9m,
+  organism = "mmusculus",
+  sources = c("KEGG", "REAC"),
+  significant = TRUE,
+  user_threshold = 0.05
+)
+
+enrich_15m <- gost(
+  query = sig_genes_15m,
+  organism = "mmusculus",
+  sources = c("KEGG", "REAC"),
+  significant = TRUE,
+  user_threshold = 0.05
+)
+
+cat("Enriched terms — 9m:", nrow(enrich_9m$result),
+    "| 15m:", nrow(enrich_15m$result), "\n")
+```
+
+## Figure 8: Enrichment Comparison Dot Plot
+
+We compare significantly enriched KEGG/Reactome terms across timepoints.
+Each dot's size reflects the number of overlapping genes, and position shows
+the −log10 adjusted p-value.
+
+```{r}
+#| label: fig-enrichment-comparison
+#| echo: true
+#| fig-width: 12
+#| fig-height: 9
+
+# Extract and merge enrichment results
+enrich_9m_df <- enrich_9m$result %>%
+  dplyr::select(term_name, source, p_value, intersection_size, term_size) %>%
+  rename(pval_9m = p_value, n_genes_9m = intersection_size)
+
+enrich_15m_df <- enrich_15m$result %>%
+  dplyr::select(term_name, source, p_value, intersection_size, term_size) %>%
+  rename(pval_15m = p_value, n_genes_15m = intersection_size)
+
+# Full outer join on term name
+enrich_compare <- full_join(enrich_9m_df, enrich_15m_df,
+                            by = c("term_name", "source", "term_size")) %>%
+  mutate(
+    neg_log10p_9m  = -log10(pmax(pval_9m, 1e-20)),
+    neg_log10p_15m = -log10(pmax(pval_15m, 1e-20))
+  ) %>%
+  replace_na(list(neg_log10p_9m = 0, neg_log10p_15m = 0,
+                  n_genes_9m = 0, n_genes_15m = 0)) %>%
+  # Keep terms with at least moderate significance at one timepoint
+  filter(neg_log10p_9m > 1.3 | neg_log10p_15m > 1.3) %>%
+  arrange(desc(neg_log10p_15m)) %>%
+  head(25)
+
+# Reshape for dot plot
+enrich_plot <- enrich_compare %>%
+  pivot_longer(
+    cols = c(neg_log10p_9m, neg_log10p_15m),
+    names_to = "timepoint_var", values_to = "neg_log10p"
+  ) %>%
+  mutate(
+    timepoint = if_else(timepoint_var == "neg_log10p_9m",
+                        "9 Months", "15 Months"),
+    n_genes = if_else(timepoint_var == "neg_log10p_9m",
+                      n_genes_9m, n_genes_15m),
+    term_name = fct_reorder(term_name, neg_log10p, .fun = max)
+  )
+
+p_enrichment <- ggplot(enrich_plot,
+       aes(x = neg_log10p, y = term_name,
+           size = n_genes, color = timepoint)) +
+  geom_point(alpha = 0.75) +
+  geom_vline(xintercept = -log10(0.05), color = "red",
+             linetype = "dashed", linewidth = 0.5, alpha = 0.6) +
+  scale_color_manual(values = c("9 Months" = "#66a61e",
+                                "15 Months" = "#7570b3"),
+                     name = "Timepoint") +
+  scale_size_continuous(range = c(2, 10), name = "Gene count") +
+  labs(
+    title = "g:Profiler Pathway Enrichment: 9m vs 15m Comparison",
+    subtitle = "KEGG + Reactome, FDR < 0.05",
+    x = expression(-log[10] * "(adjusted p-value)"),
+    y = NULL
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid.minor = element_blank(),
+    legend.position = "right"
+  )
+
+p_enrichment
+```
+
+## Figure 9: Key Metabolite Trajectories (9m → 15m)
+
+Slope chart showing fold-change trajectories for selected metabolites from
+bile acid, glutathione, and lipid pathways. Open circles = 9m, filled = 15m.
+Lines connect the same metabolite across timepoints.
+
+```{r}
+#| label: fig-metabolite-trajectory
+#| echo: true
+#| fig-width: 10
+#| fig-height: 10
+
+# Define key metabolites for trajectory analysis
+key_metabolites <- tribble(
+  ~biochemical_lower,                           ~pathway_group,
+  "taurocholate",                               "Bile Acid",
+  "cholate",                                    "Bile Acid",
+  "taurochenodeoxycholate",                     "Bile Acid",
+  "glycocholate",                               "Bile Acid",
+  "tauro-beta-muricholate",                     "Bile Acid",
+  "taurodeoxycholate",                          "Bile Acid",
+  "deoxycholate",                               "Bile Acid",
+  "taurolithocholate 3-sulfate",                "Bile Acid",
+  "ophthalmate",                                "Glutathione",
+  "glutathione, reduced (gsh)",                 "Glutathione",
+  "glutathione, oxidized (gssg)",               "Glutathione",
+  "cysteinylglycine",                           "Glutathione",
+  "s-methylglutathione",                        "Glutathione",
+  "sphingomyelin (d18:1/18:0, d18:0/18:1)*",   "Lipid",
+  "sphingomyelin (d18:2/16:0, d18:1/16:1)*",   "Lipid",
+  "palmitoyl sphingomyelin (d18:1/16:0)",       "Lipid",
+)
+
+# Match against merged data (case-insensitive)
+traj_data <- met_merged %>%
+  mutate(biochemical_lower = tolower(biochemical)) %>%
+  inner_join(key_metabolites, by = "biochemical_lower") %>%
+  mutate(
+    sig_either = pval_9m < 0.05 | pval_15m < 0.05,
+    label = if_else(nchar(biochemical) > 25,
+                    paste0(substr(biochemical, 1, 22), "..."),
+                    biochemical)
+  )
+
+cat("Found", nrow(traj_data), "metabolites for trajectory plot\n")
+
+# Pathway colour palette
+pw_colors <- c("Bile Acid" = "#e7298a", "Glutathione" = "#66a61e",
+               "Lipid" = "#7570b3")
+
+p_trajectory <- ggplot(traj_data) +
+  # Lines connecting 9m to 15m
+  geom_segment(
+    aes(x = 0, xend = 1, y = log2fc_9m, yend = log2fc_15m,
+        color = pathway_group, linewidth = sig_either, alpha = sig_either)
+  ) +
+  scale_linewidth_manual(values = c(`TRUE` = 2, `FALSE` = 0.7), guide = "none") +
+  scale_alpha_manual(values = c(`TRUE` = 0.85, `FALSE` = 0.3), guide = "none") +
+  # 9m points (open circles)
+  geom_point(
+    aes(x = 0, y = log2fc_9m, color = pathway_group),
+    shape = 21, fill = "white", size = 3, stroke = 1.2
+  ) +
+  # 15m points (filled circles)
+  geom_point(
+    aes(x = 1, y = log2fc_15m, color = pathway_group),
+    shape = 19, size = 3
+  ) +
+  # Labels for significant metabolites at 15m
+  geom_text_repel(
+    data = traj_data %>% filter(pval_15m < 0.05 | pval_9m < 0.05),
+    aes(x = 1.05, y = log2fc_15m, label = label, color = pathway_group),
+    size = 2.8, hjust = 0, direction = "y", nudge_x = 0.02,
+    segment.color = "grey70", segment.size = 0.3,
+    show.legend = FALSE
+  ) +
+  geom_hline(yintercept = 0, color = "grey60", linetype = "dashed") +
+  scale_x_continuous(
+    breaks = c(0, 1),
+    labels = c("9 Months", "15 Months"),
+    limits = c(-0.1, 1.7)
+  ) +
+  scale_color_manual(values = pw_colors, name = "Pathway") +
+  labs(
+    title = "Key Metabolite Trajectories: 9 \u2192 15 Months",
+    subtitle = "Rps2-A226Y Mutant vs WT, Liver",
+    y = expression(log[2] * " Fold Change (Mutant / WT)"),
+    x = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid.minor = element_blank(),
+    legend.position = "top"
+  )
+
+p_trajectory
+```
+
+## Directionality Consistency
+
+A key question is whether features significant at both timepoints maintain
+the same direction of change, and whether the effect amplifies at 15 months.
+
+```{r}
+#| label: directionality
+#| echo: true
+
+# Genes significant at both timepoints
+genes_both <- tx_merged %>% filter(sig_cat == "Both")
+gene_same_dir <- genes_both %>%
+  mutate(same_dir = sign(log2fc_9m) == sign(log2fc_15m))
+
+cat("Genes significant at both timepoints:", nrow(genes_both), "\n")
+cat("  Same direction:", sum(gene_same_dir$same_dir),
+    sprintf("(%.1f%%)\n", mean(gene_same_dir$same_dir) * 100))
+cat("  Amplified at 15m:",
+    sum(abs(genes_both$log2fc_15m) > abs(genes_both$log2fc_9m)),
+    sprintf("(%.1f%%)\n",
+            mean(abs(genes_both$log2fc_15m) > abs(genes_both$log2fc_9m)) * 100))
+
+# Metabolites significant at both timepoints
+mets_both <- met_merged %>% filter(sig_cat == "Both")
+met_same_dir <- mets_both %>%
+  mutate(same_dir = sign(log2fc_9m) == sign(log2fc_15m))
+
+cat("\nMetabolites significant at both timepoints:", nrow(mets_both), "\n")
+cat("  Same direction:", sum(met_same_dir$same_dir),
+    sprintf("(%.1f%%)\n", mean(met_same_dir$same_dir) * 100))
+cat("  Amplified at 15m:",
+    sum(abs(mets_both$log2fc_15m) > abs(mets_both$log2fc_9m)),
+    sprintf("(%.1f%%)\n",
+            mean(abs(mets_both$log2fc_15m) > abs(mets_both$log2fc_9m)) * 100))
+```
+
+```{r}
+#| label: direction-switching-metabolites
+#| echo: true
+
+# Identify metabolites that switched direction between timepoints
+met_same_dir %>%
+  filter(!same_dir) %>%
+  dplyr::select(biochemical, log2fc_9m, log2fc_15m, pval_9m, pval_15m) %>%
+  knitr::kable(caption = "Metabolites with opposite direction at 9m vs 15m",
+               digits = 4)
+```
+
+### Gene-Level Detail: Key Pathway Genes
+
+```{r}
+#| label: key-gene-detail
+#| echo: true
+
+# Check specific ISR/UPR, lipogenesis, and antioxidant genes across timepoints
+key_genes <- c(
+  # ISR / UPR
+  "Hspa5", "Hsp90b1", "Atf4", "Atf3", "Atf6", "Ddit3",
+  "Eif2ak3", "Xbp1", "Ern1", "Asns",
+  # Lipogenesis
+  "Srebf1", "Srebf2", "Fasn", "Acaca", "Scd1", "Scd2", "Ppara",
+  # Antioxidant
+  "Gpx1", "Gpx3", "Gpx4", "Gsr", "Gsta1", "Gsta2",
+  "Gstm1", "Gstm2", "Gstm3", "Nqo1", "Sod1", "Sod2", "Cat"
+)
+
+tx_merged %>%
+  filter(tolower(gene_name) %in% tolower(key_genes)) %>%
+  mutate(
+    sig_9m  = if_else(fdr_9m < 0.05, "*", ""),
+    sig_15m = if_else(fdr_15m < 0.05, "*", ""),
+    group = case_when(
+      tolower(gene_name) %in% tolower(c("Hspa5", "Hsp90b1", "Atf4", "Atf3",
+                                         "Atf6", "Ddit3", "Eif2ak3", "Xbp1",
+                                         "Ern1", "Asns")) ~ "ISR / UPR",
+      tolower(gene_name) %in% tolower(c("Srebf1", "Srebf2", "Fasn", "Acaca",
+                                         "Scd1", "Scd2", "Ppara")) ~ "Lipogenesis",
+      TRUE ~ "Antioxidant"
+    )
+  ) %>%
+  arrange(group, gene_name) %>%
+  dplyr::select(Group = group, Gene = gene_name,
+                `log2FC 9m` = log2fc_9m, `FDR 9m` = fdr_9m, ` ` = sig_9m,
+                `log2FC 15m` = log2fc_15m, `FDR 15m` = fdr_15m, `  ` = sig_15m) %>%
+  knitr::kable(caption = "Key pathway gene changes (* = FDR < 0.05)",
+               digits = 4)
+```
+
+## Figure 10: Integrated Pathway Heatmap
+
+A summary heatmap showing mean log2 FC of significant features across all six
+pathways, four data slices (transcriptome/metabolome × 9m/15m).
+
+```{r}
+#| label: fig-integrated-heatmap
+#| echo: true
+#| fig-width: 10
+#| fig-height: 6
+
+# Build heatmap data: mean log2FC per pathway × omics × timepoint
+heatmap_data <- pw_summary_9m %>%
+  transmute(pathway,
+            `Tx 9m`  = mean_gene_log2fc,
+            `Met 9m` = mean_met_log2fc) %>%
+  left_join(
+    pw_summary_15m %>%
+      transmute(pathway,
+                `Tx 15m`  = mean_gene_log2fc,
+                `Met 15m` = mean_met_log2fc),
+    by = "pathway"
+  )
+
+# Also store n significant for cell annotations
+n_data <- pw_summary_9m %>%
+  transmute(pathway,
+            `Tx 9m`  = n_genes_sig,
+            `Met 9m` = n_met_sig) %>%
+  left_join(
+    pw_summary_15m %>%
+      transmute(pathway,
+                `Tx 15m`  = n_genes_sig,
+                `Met 15m` = n_met_sig),
+    by = "pathway"
+  )
+
+# Use ggplot2 tile heatmap (avoids ComplexHeatmap Bioconductor dependency)
+heatmap_long <- heatmap_data %>%
+  pivot_longer(-pathway, names_to = "data_slice", values_to = "mean_log2fc") %>%
+  left_join(
+    n_data %>%
+      pivot_longer(-pathway, names_to = "data_slice", values_to = "n_sig"),
+    by = c("pathway", "data_slice")
+  ) %>%
+  mutate(
+    data_slice = factor(data_slice,
+                        levels = c("Tx 9m", "Met 9m", "Tx 15m", "Met 15m")),
+    pathway = fct_rev(fct_inorder(pathway)),
+    cell_label = sprintf("%.2f\n(n=%d)", mean_log2fc, n_sig)
+  )
+
+# Determine symmetric colour limits
+vmax <- max(abs(heatmap_long$mean_log2fc))
+
+p_heatmap <- ggplot(heatmap_long,
+       aes(x = data_slice, y = pathway, fill = mean_log2fc)) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = cell_label),
+            size = 3, color = if_else(abs(heatmap_long$mean_log2fc) > vmax * 0.5,
+                                      "white", "black")) +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "white", high = "#b2182b",
+    midpoint = 0, limits = c(-vmax, vmax),
+    name = expression("Mean " * log[2] * "FC")
+  ) +
+  labs(
+    title = "Integrated Pathway Summary: 9 vs 15 Months",
+    subtitle = "Rps2-A226Y Mutant vs WT, Liver (significant features only)",
+    x = NULL, y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid = element_blank(),
+    axis.text.x = element_text(face = "bold")
+  )
+
+p_heatmap
+```
+
+## Final Summary
+
+```{r}
+#| label: final-summary
+#| echo: true
+
+cat("=" , strrep("=", 58), "\n")
+cat("INTEGRATED ANALYSIS SUMMARY\n")
+cat(strrep("=", 60), "\n\n")
+
+cat("--- Dataset Sizes ---\n")
+cat(sprintf("9m transcriptome:  %d genes, %d significant (FDR < 0.05)\n",
+            nrow(tx_9m), sum(tx_9m$significant)))
+cat(sprintf("15m transcriptome: %d genes, %d significant (FDR < 0.05)\n",
+            nrow(tx_15m), sum(tx_15m$significant)))
+cat(sprintf("9m metabolome:     %d metabolites, %d significant (p < 0.05)\n",
+            nrow(met_9m), sum(met_9m$significant)))
+cat(sprintf("15m metabolome:    %d metabolites, %d significant (p < 0.05)\n",
+            nrow(met_15m), sum(met_15m$significant)))
+
+cat("\n--- Temporal Concordance ---\n")
+cat(sprintf("Genes sig at both:       %d, %.0f%% same direction\n",
+            nrow(genes_both), mean(gene_same_dir$same_dir) * 100))
+cat(sprintf("Metabolites sig at both: %d, %.0f%% same direction\n",
+            nrow(mets_both), mean(met_same_dir$same_dir) * 100))
+
+cat("\n--- Key Biological Findings ---\n")
+cat("1. Progressive phenotype: 9m -> 15m shows escalating dysregulation\n")
+cat("2. Bile acid accumulation enriched at BOTH timepoints\n")
+cat("3. ISR/UPR: Hspa5/BiP up at 9m, silenced at 15m\n")
+cat("4. Lipogenesis suppressed at 15m (Srebf1, Fasn, Acaca)\n")
+cat("5. Antioxidant downregulation at 15m (Gpx1, Sod1)\n")
+```
+
+## Save Outputs
+
+```{r}
+#| label: save-outputs
+#| echo: true
+
+# Create output directory for this script
+output_dir <- here("output", "02_temporal_comparison_and_integration")
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Save merged data
+saveRDS(met_merged, file.path(output_dir, "met_merged.rds"))
+saveRDS(tx_merged,  file.path(output_dir, "tx_merged.rds"))
+
+# Save enrichment results
+saveRDS(enrich_9m$result,  file.path(output_dir, "gprofiler_9m.rds"))
+saveRDS(enrich_15m$result, file.path(output_dir, "gprofiler_15m.rds"))
+
+# Save figures
+ggsave(file.path(output_dir, "fig_temporal_scatter.png"),
+       p_temporal_scatter, width = 14, height = 6.5, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_temporal_pathway.png"),
+       p_temporal_pathway, width = 14, height = 7, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_enrichment_comparison.png"),
+       p_enrichment, width = 12, height = 9, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_metabolite_trajectory.png"),
+       p_trajectory, width = 10, height = 10, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_integrated_heatmap.png"),
+       p_heatmap, width = 10, height = 6, dpi = 300, bg = "white")
+
+cat("All outputs saved to:", output_dir, "\n")
+```
+
+## Session Info
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+#| label: session-info
+#| echo: false
+sessionInfo()
+```
+:::
+
+```{r}
+#| label: purl
+#| echo: false
+#| eval: false
+
+# Uncomment to extract R code from this document
+# knitr::purl(here("02_temporal_comparison_and_integration.qmd"),
+#             output = here("02_temporal_comparison_and_integration.R"))
+```

@@ -1,0 +1,884 @@
+---
+title: "Integrated Transcriptome–Metabolome Analysis of Rps2-A226Y Mutant Liver"
+subtitle: "Part 1: Data Loading, Pathway Mapping & Enrichment"
+author: "Ivan Osinnii"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    df-print: paged
+    fig-width: 10
+    fig-height: 7
+execute:
+  warning: false
+  message: false
+  freeze: true
+---
+
+```{r}
+#| label: setup
+#| echo: false
+
+knitr::opts_chunk$set(dpi = 150)
+```
+
+## Overview
+
+This analysis integrates transcriptome (edgeR) and metabolome (Metabolon) data from
+liver tissue of **Rps2-A226Y mutant** vs wildtype female mice at two timepoints:
+**9 months** and **15 months** of age. We examine coordinated pathway-level changes
+across both omics layers.
+
+> **Note on age labels**: The original data files are labelled "6m" and "12m",
+> but the actual cohort ages are 9 months and 15 months respectively. We use the
+> corrected labels throughout.
+
+## Libraries
+
+```{r}
+#| label: load-libraries
+#| echo: true
+
+# Load core packages for data wrangling and visualization
+library(tidyverse)
+library(here)
+library(readxl)
+library(pals)
+library(patchwork)
+library(ggrepel)
+library(scales)
+```
+
+## Data Loading
+
+We have four input files: metabolomics and transcriptomics for each of two timepoints.
+The metabolomics platforms differ in column layout between timepoints; the
+transcriptomics files share a common edgeR output format.
+
+### 9-Month Metabolomics
+
+The 9m file has a sub-header in row 2 that must be skipped. The Super Pathway and
+Sub Pathway columns use a grouped layout where empty cells inherit from the row above.
+
+```{r}
+#| label: load-met-9m
+#| echo: true
+
+# Read 9m metabolomics CSV, skipping the sub-header row
+met_9m_raw <- read_delim(
+  here("input", "Liver 6m mice metabolomics mut vs wt differential analysis.csv"),
+  delim = ";",
+  skip = 2,
+  col_names = c("super_pathway", "sub_pathway", "biochemical",
+                "comp_id", "kegg", "hmdb", "pubchem",
+                "fold_change", "p_value", "q_value"),
+  col_types = cols(
+    super_pathway = col_character(),
+    sub_pathway   = col_character(),
+    biochemical   = col_character(),
+    comp_id       = col_character(),
+    kegg          = col_character(),
+    hmdb          = col_character(),
+    pubchem       = col_character(),
+    fold_change   = col_double(),
+    p_value       = col_double(),
+    q_value       = col_double()
+  )
+)
+
+# Forward-fill grouped pathway columns and compute log2 FC
+met_9m <- met_9m_raw %>%
+  fill(super_pathway, sub_pathway, .direction = "down") %>%
+  filter(!is.na(biochemical), !is.na(fold_change)) %>%
+  mutate(
+    log2fc       = log2(fold_change),
+    neg_log10p   = -log10(pmax(p_value, 1e-10)),
+    significant  = p_value < 0.05,
+    timepoint    = "9m"
+  )
+
+cat("9m metabolomics:", nrow(met_9m), "metabolites,",
+    sum(met_9m$significant), "significant (p < 0.05)\n")
+```
+
+### 15-Month Metabolomics
+
+The 15m file has a simpler 5-column layout with no sub-header row.
+
+```{r}
+#| label: load-met-15m
+#| echo: true
+
+# Read 15m metabolomics CSV (straightforward 5-column format)
+met_15m <- read_delim(
+  here("input", "Liver 12m mice metabolomics mut vs wt differential analysis.csv"),
+  delim = ";",
+  col_types = cols(
+    biochemical  = col_character(),
+    mainpathway  = col_character(),
+    subpathway   = col_character(),
+    `12 Months`  = col_double(),
+    `p-value`    = col_double()
+  )
+) %>%
+  rename(
+    super_pathway = mainpathway,
+    sub_pathway   = subpathway,
+    fold_change   = `12 Months`,
+    p_value       = `p-value`
+  ) %>%
+  filter(!is.na(biochemical), !is.na(fold_change)) %>%
+  mutate(
+    log2fc       = log2(fold_change),
+    neg_log10p   = -log10(pmax(p_value, 1e-10)),
+    significant  = p_value < 0.05,
+    timepoint    = "15m"
+  )
+
+cat("15m metabolomics:", nrow(met_15m), "metabolites,",
+    sum(met_15m$significant), "significant (p < 0.05)\n")
+```
+
+### 9-Month Transcriptomics
+
+```{r}
+#| label: load-tx-9m
+#| echo: true
+
+# Read 9m transcriptomics from edgeR Excel output
+tx_9m <- read_excel(
+  here("input", "custom edgeR output 6M mice Mut v Wtcr transcriptome.xlsx"),
+  sheet = 1
+) %>%
+  rename(
+    gene_name = gene_name,
+    log2fc    = `log2 Ratio`,
+    p_value   = pValue,
+    fdr       = fdr
+  ) %>%
+  filter(!is.na(gene_name)) %>%
+  # Remove Excel date-converted gene names (e.g. Sep1 -> date)
+  filter(is.character(gene_name)) %>%
+  mutate(
+    neg_log10p  = -log10(pmax(p_value, 1e-10)),
+    significant = fdr < 0.05,
+    timepoint   = "9m"
+  )
+
+cat("9m transcriptomics:", nrow(tx_9m), "genes,",
+    sum(tx_9m$significant), "significant (FDR < 0.05)\n")
+```
+
+### 15-Month Transcriptomics
+
+```{r}
+#| label: load-tx-15m
+#| echo: true
+
+# Read 15m transcriptomics from edgeR Excel output
+tx_15m <- read_excel(
+  here("input", "custom edgeR output 12M mice Mut v Wtcr transcriptome.xlsx"),
+  sheet = 1
+) %>%
+  rename(
+    gene_name = gene_name,
+    log2fc    = `log2 Ratio`,
+    p_value   = pValue,
+    fdr       = fdr
+  ) %>%
+  filter(!is.na(gene_name)) %>%
+  filter(is.character(gene_name)) %>%
+  mutate(
+    neg_log10p  = -log10(pmax(p_value, 1e-10)),
+    significant = fdr < 0.05,
+    timepoint   = "15m"
+  )
+
+cat("15m transcriptomics:", nrow(tx_15m), "genes,",
+    sum(tx_15m$significant), "significant (FDR < 0.05)\n")
+```
+
+### Data Summary
+
+```{r}
+#| label: data-summary-table
+#| echo: true
+
+# Compile a quick overview of all four datasets
+tibble(
+  Dataset   = c("Metabolomics 9m", "Metabolomics 15m",
+                "Transcriptomics 9m", "Transcriptomics 15m"),
+  Total     = c(nrow(met_9m), nrow(met_15m), nrow(tx_9m), nrow(tx_15m)),
+  Sig_up    = c(
+    sum(met_9m$significant & met_9m$log2fc > 0),
+    sum(met_15m$significant & met_15m$log2fc > 0),
+    sum(tx_9m$significant & tx_9m$log2fc > 0),
+    sum(tx_15m$significant & tx_15m$log2fc > 0)
+  ),
+  Sig_down  = c(
+    sum(met_9m$significant & met_9m$log2fc < 0),
+    sum(met_15m$significant & met_15m$log2fc < 0),
+    sum(tx_9m$significant & tx_9m$log2fc < 0),
+    sum(tx_15m$significant & tx_15m$log2fc < 0)
+  ),
+  Threshold = c("p < 0.05", "p < 0.05", "FDR < 0.05", "FDR < 0.05")
+) %>%
+  knitr::kable(caption = "Dataset overview — Rps2-A226Y Mutant vs WT, Liver")
+```
+
+## Pathway–Gene–Metabolite Mapping
+
+We define six key biological pathways relevant to liver mistranslation response.
+Each pathway maps curated gene lists (from KEGG/Reactome) to metabolite
+sub-pathway annotations from the Metabolon platform.
+
+```{r}
+#| label: pathway-definitions
+#| echo: true
+
+# Define pathway-gene-metabolite mappings for integrated analysis
+pathway_map <- list(
+  "Bile Acid Metabolism" = list(
+    genes = c("Cyp7a1", "Cyp8b1", "Cyp27a1", "Cyp7b1", "Baat", "Slc27a5",
+              "Abcb11", "Abcc2", "Abcc3", "Abcc4", "Abcb4", "Nr1h4", "Nr0b2",
+              "Slco1a1", "Slco1b2", "Slc10a1", "Hsd3b7", "Akr1d1", "Amacr",
+              "Scp2", "Slc51a", "Slc51b", "Cyp2c70", "Cyp2a12",
+              "Sult2a1", "Sult2a2", "Sult2a3", "Sult2a4",
+              "Sult2a5", "Sult2a6", "Sult2a7", "Sult2a8"),
+    met_subpathways = c("Primary Bile Acid Metabolism",
+                        "Secondary Bile Acid Metabolism")
+  ),
+  "Glutathione & Oxidative Stress" = list(
+    genes = c("Gclc", "Gclm", "Gss", "Gpx1", "Gpx2", "Gpx3", "Gpx4", "Gsr",
+              "Gsta1", "Gsta2", "Gsta3", "Gsta4",
+              "Gstm1", "Gstm2", "Gstm3", "Gstm4", "Gstm5", "Gstm6", "Gstm7",
+              "Gstp1", "Gstp2", "Gstt1", "Gstt2", "Gstt3",
+              "Nfe2l2", "Keap1", "Nqo1", "Hmox1", "Hmox2",
+              "Sod1", "Sod2", "Cat", "Txn1", "Txn2", "Txnrd1", "Txnrd2",
+              "Prdx1", "Prdx2", "Prdx3", "Prdx4", "Prdx5", "Prdx6",
+              "Mgst1", "Mgst2", "Mgst3"),
+    met_subpathways = c("Glutathione Metabolism",
+                        "Gamma-glutamyl Amino Acid")
+  ),
+  "Lipid & Sphingolipid Metabolism" = list(
+    genes = c("Smpd1", "Smpd2", "Smpd3", "Sgms1", "Sgms2",
+              "Cers1", "Cers2", "Cers3", "Cers4", "Cers5", "Cers6",
+              "Sptlc1", "Sptlc2", "Kdsr", "Degs1", "Degs2", "Ugcg",
+              "Asah1", "Asah2", "Acer1", "Acer2", "Acer3",
+              "Sphk1", "Sphk2", "Sgpl1",
+              "Ppara", "Pparg", "Ppard", "Srebf1", "Srebf2",
+              "Fasn", "Acaca", "Scd1", "Scd2",
+              "Elovl1", "Elovl2", "Elovl3", "Elovl4", "Elovl5", "Elovl6",
+              "Fads1", "Fads2"),
+    met_subpathways = c("Sphingomyelins", "Ceramides",
+                        "Lactosylceramides (LCER)",
+                        "Phosphatidylcholine (PC)",
+                        "Phosphatidylethanolamine (PE)",
+                        "Plasmalogen", "Lysophospholipid", "Lysoplasmalogen",
+                        "Diacylglycerol", "Phospholipid Metabolism")
+  ),
+  "Amino Acid & Protein Quality" = list(
+    genes = c("Atf4", "Atf3", "Atf5", "Atf6", "Ddit3",
+              "Eif2ak1", "Eif2ak2", "Eif2ak3", "Eif2ak4", "Eif2s1",
+              "Asns", "Psat1", "Phgdh", "Shmt2", "Mthfd2",
+              "Cth", "Cbs", "Mat1a", "Mat2a", "Bhmt", "Gnmt",
+              "Ahcy", "Mtr", "Mtrr", "Bcat1", "Bcat2", "Bckdha", "Bckdhb",
+              "Hspa5", "Hsp90b1", "Calr", "Canx", "Ern1", "Xbp1"),
+    met_subpathways = c("Leucine, Isoleucine and Valine Metabolism",
+                        "Glutamate Metabolism",
+                        "Methionine, Cysteine, SAM and Taurine Metabolism",
+                        "Tryptophan Metabolism",
+                        "Histidine Metabolism",
+                        "Alanine and Aspartate Metabolism",
+                        "Urea cycle; Arginine and Proline Metabolism")
+  ),
+  "Purine & Pyrimidine Metabolism" = list(
+    genes = c("Hprt", "Xdh", "Ada", "Pnp", "Atic", "Gart", "Pfas", "Paics",
+              "Adsl", "Adss", "Impdh1", "Impdh2", "Gmps", "Umps", "Cad",
+              "Dhodh", "Ctps1", "Ctps2", "Rrm1", "Rrm2", "Tyms", "Tk1",
+              "Dck", "Uck1", "Uck2"),
+    met_subpathways = c("Purine Metabolism, (Hypo)Xanthine/Inosine containing",
+                        "Pyrimidine Metabolism, Cytidine containing",
+                        "Pyrimidine Metabolism, Uracil containing",
+                        "Purine Metabolism, Adenine containing",
+                        "Purine Metabolism, Guanine containing")
+  ),
+  "Nicotinamide & Cofactor Metabolism" = list(
+    genes = c("Nampt", "Nmnat1", "Nmnat2", "Nmnat3", "Nmrk1", "Nmrk2",
+              "Nadsyn1", "Qprt", "Naprt", "Nnmt",
+              "Aox1", "Aox3", "Aldh1a1", "Aldh1a2", "Aldh1a3", "Aldh2"),
+    met_subpathways = c("Nicotinate and Nicotinamide Metabolism",
+                        "Vitamin B6 Metabolism",
+                        "Pantothenate and CoA Metabolism",
+                        "Riboflavin Metabolism")
+  )
+)
+```
+
+## Pathway-Level Summaries
+
+For each pathway we count how many genes/metabolites are found and significant,
+and compute the mean log2 FC of the significant features. This provides the
+data underlying the pathway overview figures.
+
+```{r}
+#| label: pathway-summary-function
+#| echo: true
+
+# Aggregate omics data at the pathway level for a given timepoint
+build_pathway_summary <- function(tx_data, met_data, pathway_map) {
+  map_dfr(names(pathway_map), function(pw_name) {
+    pw <- pathway_map[[pw_name]]
+
+    # Match genes (case-insensitive)
+    tx_match <- tx_data %>%
+      filter(tolower(gene_name) %in% tolower(pw$genes))
+    tx_sig <- tx_match %>% filter(significant)
+
+    # Match metabolites by sub-pathway
+    met_match <- met_data %>%
+      filter(sub_pathway %in% pw$met_subpathways)
+    met_sig <- met_match %>% filter(significant)
+
+    tibble(
+      pathway         = pw_name,
+      n_genes_found   = nrow(tx_match),
+      n_genes_sig     = nrow(tx_sig),
+      mean_gene_log2fc = if (nrow(tx_sig) > 0) mean(tx_sig$log2fc) else 0,
+      n_met_found     = nrow(met_match),
+      n_met_sig       = nrow(met_sig),
+      mean_met_log2fc = if (nrow(met_sig) > 0) mean(met_sig$log2fc) else 0
+    )
+  })
+}
+```
+
+```{r}
+#| label: pathway-summaries
+#| echo: true
+
+# Compute pathway summaries for both timepoints
+pw_summary_9m  <- build_pathway_summary(tx_9m, met_9m, pathway_map)
+pw_summary_15m <- build_pathway_summary(tx_15m, met_15m, pathway_map)
+
+pw_summary_15m %>%
+  knitr::kable(caption = "15-month pathway-level summary", digits = 3)
+```
+
+## Figure 1–2: Pathway Butterfly Charts {.tabset}
+
+Butterfly charts display the mean log2 FC of significant genes (left) and
+metabolites (right) for each pathway, with annotations showing the number of
+significant features out of total found.
+
+```{r}
+#| label: butterfly-chart-function
+#| echo: true
+
+# Reusable function for pathway butterfly plots
+plot_pathway_butterfly <- function(pw_data, timepoint_label) {
+  # Reshape for dual-panel plotting
+  pw_long <- pw_data %>%
+    mutate(pathway = fct_rev(fct_inorder(pathway))) %>%
+    pivot_longer(
+      cols = c(mean_gene_log2fc, mean_met_log2fc),
+      names_to = "omics", values_to = "mean_log2fc"
+    ) %>%
+    mutate(
+      omics_label = if_else(omics == "mean_gene_log2fc",
+                            "Transcriptome\n(FDR < 0.05)",
+                            "Metabolome\n(p < 0.05)"),
+      n_sig   = if_else(omics == "mean_gene_log2fc", n_genes_sig, n_met_sig),
+      n_found = if_else(omics == "mean_gene_log2fc", n_genes_found, n_met_found),
+      direction = case_when(
+        mean_log2fc > 0 ~ "Up",
+        mean_log2fc < 0 ~ "Down",
+        TRUE            ~ "None"
+      )
+    )
+
+  ggplot(pw_long, aes(x = mean_log2fc, y = pathway, fill = direction)) +
+    geom_col(width = 0.65, alpha = 0.85) +
+    geom_text(
+      aes(label = paste0(n_sig, "/", n_found),
+          hjust = if_else(mean_log2fc >= 0, -0.15, 1.15)),
+      size = 3, fontface = "bold"
+    ) +
+    geom_vline(xintercept = 0, color = "grey50", linetype = "dashed") +
+    scale_fill_manual(
+      values = c(Up = "#d95f02", Down = "#1b9e77", None = "#999999"),
+      guide  = "none"
+    ) +
+    facet_wrap(~ omics_label, scales = "free_x") +
+    labs(
+      title = paste0("Rps2-A226Y Mutant vs WT: Pathway-Level Changes (",
+                      timepoint_label, ")"),
+      subtitle = "Liver, female mice",
+      x = expression("Mean " * log[2] * " Fold Change (significant features)"),
+      y = NULL
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(
+      plot.title    = element_text(face = "bold", size = 13),
+      strip.text    = element_text(face = "bold", size = 11),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+::: {.panel-tabset}
+
+### 15 Months
+
+```{r}
+#| label: fig-butterfly-15m
+#| echo: true
+#| fig-width: 14
+#| fig-height: 7
+
+# Pathway butterfly chart — 15-month cohort
+p_butterfly_15m <- plot_pathway_butterfly(pw_summary_15m, "15 Months")
+p_butterfly_15m
+```
+
+### 9 Months
+
+```{r}
+#| label: fig-butterfly-9m
+#| echo: true
+#| fig-width: 14
+#| fig-height: 7
+
+# Pathway butterfly chart — 9-month cohort
+p_butterfly_9m <- plot_pathway_butterfly(pw_summary_9m, "9 Months")
+p_butterfly_9m
+```
+
+:::
+
+## Figure 3–4: Gene–Metabolite Dot Plots {.tabset}
+
+Dot plots show individual significant genes (squares) and metabolites (circles)
+within each pathway. Dot size reflects significance (−log10 p/FDR), and colour
+indicates direction of change.
+
+```{r}
+#| label: detail-data-function
+#| echo: true
+
+# Collect individual significant genes and metabolites per pathway
+build_detail_data <- function(tx_data, met_data, pathway_map, max_met = 10) {
+  map_dfr(names(pathway_map), function(pw_name) {
+    pw <- pathway_map[[pw_name]]
+
+    # Significant genes in this pathway
+    gene_rows <- tx_data %>%
+      filter(tolower(gene_name) %in% tolower(pw$genes), significant) %>%
+      transmute(
+        pathway  = pw_name,
+        name     = gene_name,
+        type     = "Gene",
+        log2fc   = log2fc,
+        sig_metric = -log10(pmax(fdr, 1e-10))
+      )
+
+    # Significant metabolites in this pathway (top N by p-value)
+    met_rows <- met_data %>%
+      filter(sub_pathway %in% pw$met_subpathways, significant) %>%
+      slice_min(p_value, n = max_met, with_ties = FALSE) %>%
+      transmute(
+        pathway  = pw_name,
+        name     = biochemical,
+        type     = "Metabolite",
+        log2fc   = log2fc,
+        sig_metric = neg_log10p
+      )
+
+    bind_rows(gene_rows, met_rows)
+  })
+}
+```
+
+```{r}
+#| label: dot-plot-function
+#| echo: true
+
+# Reusable dot plot for gene-metabolite detail view
+plot_gene_metabolite_dots <- function(detail_data, timepoint_label,
+                                     pathway_order = NULL) {
+  if (nrow(detail_data) == 0) {
+    return(ggplot() + annotate("text", x = 0.5, y = 0.5,
+                               label = "No significant features found"))
+  }
+
+  if (is.null(pathway_order)) {
+    pathway_order <- unique(detail_data$pathway)
+  }
+
+  # Build plotting dataframe with y-positions
+  plot_df <- detail_data %>%
+    mutate(
+      pathway = factor(pathway, levels = pathway_order),
+      direction = if_else(log2fc > 0, "Up", "Down"),
+      shape_type = if_else(type == "Gene", "Gene (FDR < 0.05)",
+                           "Metabolite (p < 0.05)"),
+      # Truncate long metabolite names
+      label = if_else(nchar(name) > 35, paste0(substr(name, 1, 32), "..."), name)
+    ) %>%
+    arrange(pathway, type, log2fc) %>%
+    mutate(y_pos = row_number())
+
+  # Add small gaps between pathways
+  pw_offsets <- plot_df %>%
+    group_by(pathway) %>%
+    summarise(start = min(y_pos), .groups = "drop") %>%
+    mutate(offset = (row_number() - 1) * 1.5)
+
+  plot_df <- plot_df %>%
+    left_join(pw_offsets, by = "pathway") %>%
+    mutate(y_pos = y_pos + offset)
+
+  # Background shading per pathway
+  pw_bounds <- plot_df %>%
+    group_by(pathway) %>%
+    summarise(ymin = min(y_pos) - 0.5, ymax = max(y_pos) + 0.5,
+              ymid = mean(y_pos), .groups = "drop")
+
+  ggplot(plot_df) +
+    # Horizontal separators between pathway blocks
+    geom_hline(data = pw_bounds,
+               aes(yintercept = ymax),
+               color = "grey85", linewidth = 0.3) +
+    # Dot layer
+    geom_point(
+      aes(x = log2fc, y = y_pos,
+          size = sig_metric, fill = direction, shape = shape_type),
+      alpha = 0.8, stroke = 0.4, color = "black"
+    ) +
+    # Pathway labels
+    geom_label(data = pw_bounds,
+               aes(x = min(plot_df$log2fc) - 0.3, y = ymid, label = pathway),
+               size = 3, fontface = "bold", hjust = 0,
+               fill = "white", label.size = 0.3, alpha = 0.9) +
+    # Reference line
+    geom_vline(xintercept = 0, color = "grey50", linetype = "dashed") +
+    # Y-axis labels
+    scale_y_continuous(
+      breaks = plot_df$y_pos,
+      labels = plot_df$label,
+      expand = expansion(mult = 0.02)
+    ) +
+    scale_shape_manual(values = c("Gene (FDR < 0.05)" = 22,
+                                  "Metabolite (p < 0.05)" = 21)) +
+    scale_fill_manual(values = c(Up = "#d95f02", Down = "#1b9e77")) +
+    scale_size_continuous(range = c(2, 8),
+                          name = expression(-log[10] * "(p / FDR)")) +
+    labs(
+      title = paste0("Gene–Metabolite Changes by Pathway (", timepoint_label, ")"),
+      subtitle = "Rps2-A226Y Mutant vs WT, Liver, female mice",
+      x = expression(log[2] ~ "Fold Change (Mutant / WT)"),
+      y = NULL, shape = NULL, fill = "Direction"
+    ) +
+    coord_cartesian(clip = "off") +
+    theme_minimal(base_size = 10) +
+    theme(
+      plot.title = element_text(face = "bold", size = 13),
+      axis.text.y = element_text(size = 7),
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom"
+    ) +
+    guides(fill = guide_legend(override.aes = list(size = 5)))
+}
+```
+
+::: {.panel-tabset}
+
+### 15 Months
+
+```{r}
+#| label: fig-dots-15m
+#| echo: true
+#| fig-width: 12
+#| fig-height: 16
+
+# Gene-metabolite dot plot — 15-month cohort
+detail_15m <- build_detail_data(tx_15m, met_15m, pathway_map)
+p_dots_15m <- plot_gene_metabolite_dots(detail_15m, "15 Months")
+p_dots_15m
+```
+
+### 9 Months
+
+```{r}
+#| label: fig-dots-9m
+#| echo: true
+#| fig-width: 12
+#| fig-height: 14
+
+# Gene-metabolite dot plot — 9-month cohort
+detail_9m <- build_detail_data(tx_9m, met_9m, pathway_map)
+p_dots_9m <- plot_gene_metabolite_dots(detail_9m, "9 Months")
+p_dots_9m
+```
+
+:::
+
+## Metabolite Pathway Enrichment
+
+We test whether metabolites within each sub-pathway are systematically shifted
+relative to the background using two complementary approaches:
+**Over-Representation Analysis (ORA)** via Fisher's exact test, and
+**Quantitative Enrichment Analysis (QEA)** via Wilcoxon rank-sum test.
+
+### Over-Representation Analysis (ORA)
+
+ORA tests whether a pathway contains a disproportionate number of significant
+metabolites compared to chance.
+
+```{r}
+#| label: ora-function
+#| echo: true
+
+# Fisher's exact ORA on metabolite sub-pathways
+run_metabolite_ora <- function(met_data, pval_col = "p_value",
+                               pathway_col = "sub_pathway",
+                               sig_threshold = 0.05, min_size = 2) {
+  total_sig    <- sum(met_data[[pval_col]] < sig_threshold)
+  total_nonsig <- nrow(met_data) - total_sig
+
+  met_data %>%
+    group_by(across(all_of(pathway_col))) %>%
+    summarise(
+      n_total = n(),
+      n_sig   = sum(.data[[pval_col]] < sig_threshold),
+      mean_log2fc = mean(log2fc[.data[[pval_col]] < sig_threshold], na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(n_total >= min_size) %>%
+    rowwise() %>%
+    mutate(
+      fisher_p = fisher.test(
+        matrix(c(n_sig, total_sig - n_sig,
+                 n_total - n_sig, total_nonsig - (n_total - n_sig)),
+               nrow = 2),
+        alternative = "greater"
+      )$p.value,
+      direction = if_else(mean_log2fc > 0, "Up", "Down")
+    ) %>%
+    ungroup() %>%
+    mutate(fisher_fdr = p.adjust(fisher_p, method = "BH")) %>%
+    arrange(fisher_p)
+}
+```
+
+```{r}
+#| label: ora-results
+#| echo: true
+
+# Run ORA for both timepoints
+ora_9m  <- run_metabolite_ora(met_9m)
+ora_15m <- run_metabolite_ora(met_15m)
+
+cat("--- 9m ORA top pathways (Fisher p < 0.1) ---\n")
+ora_9m %>%
+  filter(fisher_p < 0.1) %>%
+  dplyr::select(sub_pathway, n_total, n_sig, mean_log2fc, fisher_p, fisher_fdr) %>%
+  knitr::kable(digits = 4)
+```
+
+### Quantitative Enrichment Analysis (QEA)
+
+QEA tests whether the fold-change distribution of metabolites within a pathway
+differs from the background (all other metabolites) using a Wilcoxon rank-sum test.
+
+```{r}
+#| label: qea-function
+#| echo: true
+
+# Wilcoxon rank-sum QEA on metabolite sub-pathways
+run_metabolite_qea <- function(met_data, pathway_col = "sub_pathway",
+                                min_size = 3) {
+  pathways <- met_data %>%
+    count(across(all_of(pathway_col))) %>%
+    filter(n >= min_size) %>%
+    pull(1)
+
+  map_dfr(pathways, function(pw) {
+    pw_fc <- met_data %>%
+      filter(.data[[pathway_col]] == pw) %>%
+      pull(log2fc)
+    bg_fc <- met_data %>%
+      filter(.data[[pathway_col]] != pw) %>%
+      pull(log2fc)
+
+    wt <- wilcox.test(pw_fc, bg_fc)
+
+    tibble(
+      pathway      = pw,
+      n            = length(pw_fc),
+      mean_log2fc  = mean(pw_fc),
+      median_log2fc = median(pw_fc),
+      wilcox_p     = wt$p.value,
+      direction    = if_else(mean(pw_fc) > 0, "Up", "Down")
+    )
+  }) %>%
+    mutate(wilcox_fdr = p.adjust(wilcox_p, method = "BH")) %>%
+    arrange(wilcox_p)
+}
+```
+
+```{r}
+#| label: qea-results
+#| echo: true
+
+# Run QEA for both timepoints
+qea_9m  <- run_metabolite_qea(met_9m)
+qea_15m <- run_metabolite_qea(met_15m)
+
+cat("--- 9m QEA top 15 pathways ---\n")
+qea_9m %>%
+  head(15) %>%
+  dplyr::select(pathway, n, mean_log2fc, wilcox_p, wilcox_fdr, direction) %>%
+  knitr::kable(digits = 4)
+```
+
+## Figure 5: Metabolite QEA Comparison (9m vs 15m)
+
+We compare QEA results across timepoints, highlighting pathways significant
+at either or both ages.
+
+```{r}
+#| label: fig-qea-comparison
+#| echo: true
+#| fig-width: 12
+#| fig-height: 8
+
+# Merge QEA results across timepoints
+qea_9m_sel <- qea_9m %>%
+  filter(wilcox_p < 0.1) %>%
+  dplyr::select(pathway, n_9m = n, mean_log2fc_9m = mean_log2fc,
+                wilcox_p_9m = wilcox_p, dir_9m = direction)
+
+qea_15m_sel <- qea_15m %>%
+  filter(wilcox_p < 0.1) %>%
+  dplyr::select(pathway, n_15m = n, mean_log2fc_15m = mean_log2fc,
+                wilcox_p_15m = wilcox_p, dir_15m = direction)
+
+# Union of pathways significant at either timepoint
+qea_compare <- full_join(qea_9m_sel, qea_15m_sel, by = "pathway") %>%
+  replace_na(list(wilcox_p_9m = 1, wilcox_p_15m = 1)) %>%
+  mutate(
+    neg_log10p_9m  = -log10(pmax(wilcox_p_9m, 1e-10)),
+    neg_log10p_15m = -log10(pmax(wilcox_p_15m, 1e-10)),
+    pathway = fct_reorder(pathway, neg_log10p_15m)
+  )
+
+# Reshape for paired barplot
+qea_plot_data <- qea_compare %>%
+  pivot_longer(
+    cols = c(neg_log10p_9m, neg_log10p_15m),
+    names_to = "timepoint", values_to = "neg_log10p"
+  ) %>%
+  mutate(
+    timepoint_label = if_else(timepoint == "neg_log10p_9m",
+                              "9 Months", "15 Months"),
+    dir = if_else(timepoint == "neg_log10p_9m",
+                  replace_na(dir_9m, "NA"), replace_na(dir_15m, "NA")),
+    fill_col = case_when(
+      dir == "Up"   ~ "#d95f02",
+      dir == "Down" ~ "#1b9e77",
+      TRUE          ~ "#999999"
+    )
+  ) %>%
+  replace_na(list(neg_log10p = 0))
+
+ggplot(qea_plot_data,
+       aes(x = neg_log10p, y = pathway, fill = fill_col,
+           alpha = timepoint_label)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_vline(xintercept = -log10(0.05), color = "red",
+             linetype = "dashed", linewidth = 0.6, alpha = 0.7) +
+  scale_fill_identity() +
+  scale_alpha_manual(values = c("9 Months" = 0.5, "15 Months" = 0.85),
+                     name = "Timepoint") +
+  labs(
+    title = "Metabolite Pathway QEA: 9 vs 15 Months",
+    subtitle = "Wilcoxon rank-sum test, Rps2-A226Y vs WT, Liver",
+    x = expression(-log[10] * "(p-value)"),
+    y = NULL
+  ) +
+  annotate("text", x = -log10(0.05) + 0.1, y = 0.5,
+           label = "p = 0.05", color = "red", size = 3, hjust = 0) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom"
+  )
+```
+
+## Save Intermediate Data
+
+Save cleaned data and summaries for use in Part 2 (temporal comparison).
+
+```{r}
+#| label: save-outputs
+#| echo: true
+
+# Create output directory for this script
+output_dir <- here("output", "01_data_loading_and_pathway_analysis")
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Save cleaned omics data
+saveRDS(met_9m,  file.path(output_dir, "met_9m_clean.rds"))
+saveRDS(met_15m, file.path(output_dir, "met_15m_clean.rds"))
+saveRDS(tx_9m,   file.path(output_dir, "tx_9m_clean.rds"))
+saveRDS(tx_15m,  file.path(output_dir, "tx_15m_clean.rds"))
+
+# Save pathway summaries and mapping
+saveRDS(pw_summary_9m,  file.path(output_dir, "pw_summary_9m.rds"))
+saveRDS(pw_summary_15m, file.path(output_dir, "pw_summary_15m.rds"))
+saveRDS(pathway_map,    file.path(output_dir, "pathway_map.rds"))
+
+# Save enrichment results
+saveRDS(qea_9m,  file.path(output_dir, "qea_9m.rds"))
+saveRDS(qea_15m, file.path(output_dir, "qea_15m.rds"))
+saveRDS(ora_9m,  file.path(output_dir, "ora_9m.rds"))
+saveRDS(ora_15m, file.path(output_dir, "ora_15m.rds"))
+
+# Save figures
+ggsave(file.path(output_dir, "fig_butterfly_15m.png"),
+       p_butterfly_15m, width = 14, height = 7, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_butterfly_9m.png"),
+       p_butterfly_9m, width = 14, height = 7, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_dots_15m.png"),
+       p_dots_15m, width = 12, height = 16, dpi = 300, bg = "white")
+ggsave(file.path(output_dir, "fig_dots_9m.png"),
+       p_dots_9m, width = 12, height = 14, dpi = 300, bg = "white")
+
+cat("All outputs saved to:", output_dir, "\n")
+```
+
+## Session Info
+
+::: {.callout-note collapse="true"}
+## Session Info
+
+```{r}
+#| label: session-info
+#| echo: false
+sessionInfo()
+```
+:::
+
+```{r}
+#| label: purl
+#| echo: false
+#| eval: false
+
+# Uncomment to extract R code from this document
+# knitr::purl(here("01_data_loading_and_pathway_analysis.qmd"),
+#             output = here("01_data_loading_and_pathway_analysis.R"))
+```
