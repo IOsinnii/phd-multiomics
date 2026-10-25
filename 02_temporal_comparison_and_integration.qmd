@@ -40,6 +40,7 @@ and produce an integrated summary of the Rps2-A226Y mutant liver phenotype.
 # Load core packages
 library(tidyverse)
 library(here)
+source(here("R", "plot_theme.R"))
 library(pals)
 library(patchwork)
 library(ggrepel)
@@ -188,7 +189,7 @@ p_met_scatter <- met_merged %>%
   geom_text_repel(
     data = . %>% filter(sig_cat == "Both") %>%
       slice_max(abs(log2fc_15m), n = 8),
-    aes(label = biochemical), size = 2.5, max.overlaps = 15,
+    aes(label = biochemical), size = POST_LABEL_SIZE, max.overlaps = 15,
     segment.color = "grey50", segment.size = 0.3, show.legend = FALSE
   ) +
   scale_color_manual(values = sig_colors, name = "Significant at") +
@@ -205,7 +206,7 @@ p_met_scatter <- met_merged %>%
     x = expression(log[2] * "FC at 9 Months"),
     y = expression(log[2] * "FC at 15 Months")
   ) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         legend.position = "bottom",
         panel.grid.minor = element_blank())
@@ -240,7 +241,7 @@ p_tx_scatter <- tx_merged %>%
     x = expression(log[2] * "FC at 9 Months"),
     y = expression(log[2] * "FC at 15 Months")
   ) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         legend.position = "bottom",
         panel.grid.minor = element_blank())
@@ -252,8 +253,8 @@ p_temporal_scatter <- p_met_scatter + p_tx_scatter +
     title = "Temporal Concordance of Fold Changes: 9 vs 15 Months",
     subtitle = "Rps2-A226Y Mutant vs WT, Liver",
     theme = theme(
-      plot.title = element_text(face = "bold", size = 14),
-      plot.subtitle = element_text(size = 11)
+      plot.title = element_text(face = "bold", size = 16),
+      plot.subtitle = element_text(size = 13)
     )
   ) &
   theme(legend.position = "bottom")
@@ -310,7 +311,7 @@ p_temporal_pathway <- ggplot(
     aes(label = paste0("n=", n_sig),
         hjust = if_else(mean_log2fc >= 0, -0.15, 1.15)),
     position = position_dodge(width = 0.7),
-    size = 2.8, show.legend = FALSE
+    size = POST_LABEL_SIZE, show.legend = FALSE
   ) +
   scale_fill_manual(
     values = c(Up = "#d95f02", Down = "#1b9e77", None = "#999999"),
@@ -327,10 +328,10 @@ p_temporal_pathway <- ggplot(
     x = expression("Mean " * log[2] * " Fold Change"),
     y = NULL
   ) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(
-    plot.title = element_text(face = "bold", size = 13),
-    strip.text = element_text(face = "bold", size = 11),
+    plot.title = element_text(face = "bold", size = 16),
+    strip.text = element_text(face = "bold", size = 14),
     panel.grid.minor = element_blank(),
     legend.position = "bottom"
   )
@@ -445,9 +446,9 @@ p_enrichment <- ggplot(enrich_plot,
     x = expression(-log[10] * "(adjusted p-value)"),
     y = NULL
   ) +
-  theme_minimal(base_size = 10) +
+  theme_post() +
   theme(
-    plot.title = element_text(face = "bold", size = 13),
+    plot.title = element_text(face = "bold", size = 16),
     panel.grid.minor = element_blank(),
     legend.position = "right"
   )
@@ -527,7 +528,7 @@ p_trajectory <- ggplot(traj_data) +
   geom_text_repel(
     data = traj_data %>% filter(pval_15m < 0.05 | pval_9m < 0.05),
     aes(x = 1.05, y = log2fc_15m, label = label, color = pathway_group),
-    size = 2.8, hjust = 0, direction = "y", nudge_x = 0.02,
+    size = POST_LABEL_SIZE, hjust = 0, direction = "y", nudge_x = 0.02,
     segment.color = "grey70", segment.size = 0.3,
     show.legend = FALSE
   ) +
@@ -544,9 +545,9 @@ p_trajectory <- ggplot(traj_data) +
     y = expression(log[2] * " Fold Change (Mutant / WT)"),
     x = NULL
   ) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(
-    plot.title = element_text(face = "bold", size = 13),
+    plot.title = element_text(face = "bold", size = 16),
     panel.grid.minor = element_blank(),
     legend.position = "top"
   )
@@ -701,7 +702,7 @@ p_heatmap <- ggplot(heatmap_long,
        aes(x = data_slice, y = pathway, fill = mean_log2fc)) +
   geom_tile(color = "white", linewidth = 1) +
   geom_text(aes(label = cell_label),
-            size = 3, color = if_else(abs(heatmap_long$mean_log2fc) > vmax * 0.5,
+            size = POST_LABEL_SIZE, color = if_else(abs(heatmap_long$mean_log2fc) > vmax * 0.5,
                                       "white", "black")) +
   scale_fill_gradient2(
     low = "#2166ac", mid = "white", high = "#b2182b",
@@ -713,9 +714,9 @@ p_heatmap <- ggplot(heatmap_long,
     subtitle = "Rps2-A226Y Mutant vs WT, Liver (significant features only)",
     x = NULL, y = NULL
   ) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(
-    plot.title = element_text(face = "bold", size = 13),
+    plot.title = element_text(face = "bold", size = 16),
     panel.grid = element_blank(),
     axis.text.x = element_text(face = "bold")
   )

@@ -54,6 +54,7 @@ case, not that it identified the wrong pathways.
 # Core wrangling and plotting, plus the enrichment back-end
 library(tidyverse)
 library(here)
+source(here("R", "plot_theme.R"))
 library(pals)
 library(MetaboAnalystR)
 ```
@@ -215,14 +216,14 @@ plot_coverage <- function(coverage_data, tp, tp_label) {
 
   ggplot(plot_df, aes(x = pct_smpdb, y = super_pathway, fill = super_pathway)) +
     geom_col(width = 0.7) +
-    geom_text(aes(label = paste0(smpdb_member, "/", n)), hjust = -0.2, size = 3.2) +
+    geom_text(aes(label = paste0(smpdb_member, "/", n)), hjust = -0.2, size = POST_LABEL_SIZE) +
     scale_fill_manual(values = unname(glasbey(26)), guide = "none") +
     scale_x_continuous(limits = c(0, 100), expand = expansion(mult = c(0, 0.12))) +
     labs(title = paste0("SMPDB coverage by chemical class (", tp_label, ")"),
          subtitle = "Labels show SMPDB members / metabolites measured",
          x = "% of measured metabolites present in SMPDB", y = NULL) +
-    theme_minimal(base_size = 11) +
-    theme(plot.title = element_text(face = "bold", size = 13),
+    theme_post() +
+    theme(plot.title = element_text(face = "bold", size = 16),
           panel.grid.minor = element_blank())
 }
 ```
@@ -423,8 +424,8 @@ p_background <- ora_long |>
        subtitle = "Each point is one SMPDB pathway; dotted lines mark p = 0.05",
        x = expression(-log[10] * "(p), SMPDB library background"),
        y = expression(-log[10] * "(p), measured background")) +
-  theme_minimal(base_size = 11) +
-  theme(plot.title = element_text(face = "bold", size = 13),
+  theme_post() +
+  theme(plot.title = element_text(face = "bold", size = 16),
         strip.text = element_text(face = "bold"),
         panel.grid.minor = element_blank())
 
@@ -448,8 +449,8 @@ p_obs_exp <- ora_long |>
   labs(title = "Observed vs expected pathway hits, measured background",
        subtitle = "Points on the dashed line carry no enrichment signal",
        x = "Expected hits", y = "Observed hits") +
-  theme_minimal(base_size = 11) +
-  theme(plot.title = element_text(face = "bold", size = 13),
+  theme_post() +
+  theme(plot.title = element_text(face = "bold", size = 16),
         strip.text = element_text(face = "bold"),
         panel.grid.minor = element_blank())
 

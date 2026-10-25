@@ -42,6 +42,7 @@ and cross-omics concordance scoring.
 # Core packages + enrichment and API tools
 library(tidyverse)
 library(here)
+source(here("R", "plot_theme.R"))
 library(pals)
 library(patchwork)
 library(ggrepel)
@@ -114,31 +115,31 @@ sp_cols <- unname(glasbey(n_distinct(sp_summary$super_pathway)))
 p_sp_count <- ggplot(sp_summary,
        aes(y = super_pathway, x = n_total, fill = super_pathway)) +
   geom_col(alpha = 0.85) +
-  geom_text(aes(label = n_total), hjust = -0.1, size = 3) +
+  geom_text(aes(label = n_total), hjust = -0.1, size = POST_LABEL_SIZE) +
   facet_wrap(~ timepoint) +
   scale_fill_manual(values = sp_cols, guide = "none") +
   labs(title = "Metabolite Counts by Super-Pathway",
        x = "Number of metabolites", y = NULL) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"))
 
 # Panel B: Significance rate per super-pathway
 p_sp_sig <- ggplot(sp_summary,
        aes(y = super_pathway, x = pct_sig, fill = super_pathway)) +
   geom_col(alpha = 0.85) +
-  geom_text(aes(label = sprintf("%.0f%%", pct_sig)), hjust = -0.1, size = 3) +
+  geom_text(aes(label = sprintf("%.0f%%", pct_sig)), hjust = -0.1, size = POST_LABEL_SIZE) +
   geom_vline(xintercept = 5, linetype = "dashed", color = "grey50", alpha = 0.5) +
   facet_wrap(~ timepoint) +
   scale_fill_manual(values = sp_cols, guide = "none") +
   labs(title = "Significance Rate by Super-Pathway (p < 0.05)",
        x = "% significant", y = NULL) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"))
 
 p_super_pathway <- p_sp_count / p_sp_sig +
   plot_annotation(
     title = "Metabolite Class Distribution: Rps2-A226Y Mutant vs WT",
-    theme = theme(plot.title = element_text(face = "bold", size = 14))
+    theme = theme(plot.title = element_text(face = "bold", size = 16))
   )
 
 p_super_pathway
@@ -175,7 +176,7 @@ plot_volcano <- function(df, fc_col, pval_col, label_col,
     geom_text_repel(
       data = \(d) d |> filter(.direction != "NS") |>
         slice_max(.neg_log10p, n = 12),
-      aes(label = .label), size = 2.3, max.overlaps = 12,
+      aes(label = .label), size = POST_LABEL_SIZE, max.overlaps = 12,
       segment.color = "grey60", show.legend = FALSE
     ) +
     scale_color_manual(values = c(Up = "#d95f02", Down = "#1b9e77",
@@ -187,8 +188,8 @@ plot_volcano <- function(df, fc_col, pval_col, label_col,
     labs(title = title_label,
          x = expression(log[2] ~ "Fold Change"),
          y = expression(-log[10] ~ "(p-value)")) +
-    theme_minimal(base_size = 10) +
-    theme(plot.title = element_text(face = "bold", size = 11),
+    theme_post() +
+    theme(plot.title = element_text(face = "bold", size = 16),
           panel.grid.minor = element_blank(), legend.position = "bottom")
 }
 ```
@@ -315,7 +316,7 @@ p_fc_distribution <- ggplot(fc_combined, aes(x = log2fc, fill = timepoint)) +
   labs(title = "Fold-Change Distributions",
        subtitle = "Rps2-A226Y Mutant vs WT, Liver",
        x = expression(log[2] ~ "Fold Change"), y = "Density") +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         panel.grid.minor = element_blank())
 p_fc_distribution
@@ -387,7 +388,7 @@ p_ceramide_chain <- ggplot(sl_met, aes(x = acyl_carbon, y = log2fc,
        subtitle = "Shaded regions = ceramide synthase substrate specificity",
        x = "N-Acyl Chain Carbon Count",
        y = expression(log[2] ~ "FC (Mutant / WT)")) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         panel.grid.minor = element_blank(), legend.position = "bottom") +
   guides(fill = guide_legend(nrow = 1), color = guide_legend(nrow = 1))
@@ -433,10 +434,10 @@ p_sm_species <- ggplot(sm_data, aes(x = log2fc, y = label, color = timepoint,
   scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), name = "p < 0.05") +
   labs(title = "Sphingomyelin Species: Fold Change (Mutant / WT)",
        x = expression(log[2] ~ "Fold Change"), y = NULL) +
-  theme_minimal(base_size = 10) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         panel.grid.minor = element_blank(),
-        axis.text.y = element_text(size = 8))
+        axis.text.y = element_text(size = 11))
 p_sm_species
 ```
 
@@ -501,7 +502,7 @@ vmax_sl <- max(abs(sl_heatmap$log2fc), na.rm = TRUE)
 
 p_sl_gene_panel <- ggplot(sl_heatmap, aes(x = timepoint, y = gene_name, fill = log2fc)) +
   geom_tile(color = "white", linewidth = 0.8) +
-  geom_text(aes(label = sig_label), size = 4, color = "black") +
+  geom_text(aes(label = sig_label), size = POST_LABEL_SIZE, color = "black") +
   facet_grid(arm ~ ., scales = "free_y", space = "free_y", switch = "y") +
   scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b",
                        midpoint = 0, limits = c(-vmax_sl, vmax_sl),
@@ -510,10 +511,10 @@ p_sl_gene_panel <- ggplot(sl_heatmap, aes(x = timepoint, y = gene_name, fill = l
   labs(title = "Sphingolipid Pathway Gene Expression",
        subtitle = "** FDR < 0.01, * FDR < 0.05, \u2020 p < 0.05",
        x = NULL, y = NULL) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         strip.placement = "outside",
-        strip.text.y.left = element_text(angle = 0, face = "bold", size = 9),
+        strip.text.y.left = element_text(angle = 0, face = "bold", size = 14),
         panel.grid = element_blank(),
         axis.text.y = element_text(face = "italic"))
 p_sl_gene_panel
@@ -581,7 +582,7 @@ vmax_lyso <- max(abs(lyso_heatmap$log2fc), na.rm = TRUE)
 
 p_lyso_panel <- ggplot(lyso_heatmap, aes(x = timepoint, y = gene_name, fill = log2fc)) +
   geom_tile(color = "white", linewidth = 0.8) +
-  geom_text(aes(label = sig_label), size = 3.5, color = "black") +
+  geom_text(aes(label = sig_label), size = POST_LABEL_SIZE, color = "black") +
   facet_grid(category ~ ., scales = "free_y", space = "free_y", switch = "y") +
   scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b",
                        midpoint = 0, limits = c(-vmax_lyso, vmax_lyso),
@@ -590,10 +591,10 @@ p_lyso_panel <- ggplot(lyso_heatmap, aes(x = timepoint, y = gene_name, fill = lo
   labs(title = "Lysosomal Gene Expression Panel",
        subtitle = "** FDR < 0.01, * FDR < 0.05, \u2020 p < 0.05",
        x = NULL, y = NULL) +
-  theme_minimal(base_size = 10) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         strip.placement = "outside",
-        strip.text.y.left = element_text(angle = 0, face = "bold", size = 9),
+        strip.text.y.left = element_text(angle = 0, face = "bold", size = 14),
         panel.grid = element_blank(),
         axis.text.y = element_text(face = "italic"))
 p_lyso_panel
@@ -631,7 +632,7 @@ axis_data <- tibble(gene_name = axis_genes) |>
 p_xiap_axis <- ggplot(axis_data, aes(x = timepoint, y = log2fc, fill = log2fc > 0)) +
   geom_col(alpha = 0.85, width = 0.6) +
   geom_text(aes(label = sprintf("%.2f%s", log2fc, if_else(sig, "*", ""))),
-            vjust = if_else(axis_data$log2fc > 0, -0.3, 1.3), size = 3.5) +
+            vjust = if_else(axis_data$log2fc > 0, -0.3, 1.3), size = POST_LABEL_SIZE) +
   geom_hline(yintercept = 0, color = "grey50") +
   facet_wrap(~ gene_name, nrow = 1) +
   scale_fill_manual(values = c(`TRUE` = "#d95f02", `FALSE` = "#1b9e77"),
@@ -639,9 +640,9 @@ p_xiap_axis <- ggplot(axis_data, aes(x = timepoint, y = log2fc, fill = log2fc > 
   labs(title = "Anti-Apoptosis Axis: XIAP\u2013CathepsinB\u2013SMPD1",
        subtitle = "Rps2-A226Y Mutant vs WT, Liver (* FDR < 0.05)",
        y = expression(log[2] ~ "FC"), x = NULL) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
-        strip.text = element_text(face = "bold.italic", size = 12),
+        strip.text = element_text(face = "bold.italic", size = 14),
         panel.grid.minor = element_blank())
 p_xiap_axis
 ```
@@ -738,7 +739,7 @@ p_nes <- gsea_merged |>
   geom_text_repel(
     data = \(d) d |> filter(sig_cat %in% c("Both", "9m only", "15m only")) |>
       slice_max(abs(NES_15m) + abs(NES_9m), n = 15),
-    aes(label = pathway_clean), size = 2.5, max.overlaps = 15,
+    aes(label = pathway_clean), size = POST_LABEL_SIZE, max.overlaps = 15,
     show.legend = FALSE
   ) +
   scale_color_manual(values = sig_cols, name = "Significant at") +
@@ -748,7 +749,7 @@ p_nes <- gsea_merged |>
                                `15m only` = 2, Both = 2.5), guide = "none") +
   labs(title = "NES: 9m vs 15m",
        x = "NES at 9 Months", y = "NES at 15 Months") +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
 
 # Panel B: Top terms dot plot at 15m
@@ -773,7 +774,7 @@ p_top <- ggplot(top_terms,
   scale_size_continuous(range = c(2, 8), name = "Gene set size") +
   labs(title = "Top GSEA Terms at 15 Months",
        x = "Normalized Enrichment Score", y = NULL) +
-  theme_minimal(base_size = 10) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"),
         panel.grid.minor = element_blank())
 
@@ -781,7 +782,7 @@ p_gsea_comparison <- p_nes + p_top +
   plot_annotation(
     title = "Gene Set Enrichment Analysis: fgsea + MSigDB",
     subtitle = "Rps2-A226Y Mutant vs WT, Liver",
-    theme = theme(plot.title = element_text(face = "bold", size = 14))
+    theme = theme(plot.title = element_text(face = "bold", size = 16))
   )
 p_gsea_comparison
 ```
@@ -847,14 +848,14 @@ p_concordance <- ggplot(conc_data, aes(x = timepoint, y = pathway, fill = concor
   geom_tile(color = "white", linewidth = 1) +
   geom_text(aes(label = sprintf("%s\nG:%d M:%d",
                                 label, n_genes_sig, n_met_sig)),
-            size = 3) +
+            size = POST_LABEL_SIZE) +
   scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b",
                        midpoint = 0, name = "Concordance\nscore",
                        na.value = "grey90") +
   labs(title = "Cross-Omics Pathway Concordance",
        subtitle = "Gene vs metabolite direction agreement (significant features)",
        x = NULL, y = NULL) +
-  theme_minimal(base_size = 11) +
+  theme_post() +
   theme(plot.title = element_text(face = "bold"), panel.grid = element_blank())
 p_concordance
 ```
